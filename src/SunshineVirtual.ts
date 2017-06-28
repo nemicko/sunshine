@@ -1,5 +1,4 @@
 import {Sunshine} from "./Sunshine";
-import {MongoClient} from "mongodb";
 
 const MongoInMemory = require('mongo-in-memory');
 
@@ -7,8 +6,8 @@ const MongoInMemory = require('mongo-in-memory');
  *  Sunshine DAO Virtual Connector
  *
  *  With assistance of mongo-in-memory a virtual MongoDB instance is started
- *  and connected to it.
- *  All changes are NOT persisted, after application is closed, MongoDB instance
+ *  and connected.
+ *  All changes are NOT persisted, after application exit, MongoDB instance
  *  ist shutdown and data deleted.
  *
  *  @ Michael Hasler

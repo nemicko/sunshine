@@ -1,10 +1,11 @@
 {
-  "name": "sunshine",
-  "version": "1.0.0",
-  "description": "Minimalistic schema free NodeJS / MongoDB DAO made with TypeScript and encryption",
+  "name": "sunshine-dao",
+  "version": "1.0.1",
+  "description": "Minimalistic schema free NodeJS / MongoDB DAO made with TypeScript. Meta properties allow hidden and ignored attributes, as well as field encryption",
   "main": "DataProvider.js",
   "scripts": {
-    "test": "mocha --recursive test"
+    "test": "mocha --recursive test",
+    "build": "tsc --p tsdeploy.json"
   },
   "repository": {
     "type": "git",
