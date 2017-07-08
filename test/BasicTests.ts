@@ -65,5 +65,13 @@ describe('Basic attribute persistence tests', function () {
         return;
     });
 
+    it("Query non existing documents (handling of empty - null results)", async () => {
+
+        let customer = await Customer.findOne({ _id: "null" });
+
+        expect(customer).to.be.null;
+
+    });
+
 });
 

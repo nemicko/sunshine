@@ -7,9 +7,8 @@ process.on('unhandledRejection', function(reason, p){
     console.log(p);
 });
 
-process.on('unhandledException', function(reason, p){
-    console.log(reason);
-    console.log(p);
+process.on('uncaughtException', function (exception) {
+    console.error(exception);
 });
 
 /*

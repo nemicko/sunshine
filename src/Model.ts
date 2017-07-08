@@ -26,11 +26,7 @@ export class Model extends Document{
                 let _doc = this.fetchDocument(this, false, false);
                 let collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
                 if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
-
                 this.encryptDocument(_doc);
-
-                //console.log("saved");
-
                 collection.replaceOne({ _id: this._id }, _doc, {upsert: true}, (err, result) => {
                     if (err) reject(err);
                     resolve(true);
@@ -47,7 +43,6 @@ export class Model extends Document{
             if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
 
             this.encryptDocument(_doc);
-
             collection.insertOne(_doc, (err, result) => {
                 if (err) reject(err);
                 this._id = result.insertedId;
@@ -60,8 +55,14 @@ export class Model extends Document{
         return new Promise((resolve, reject) => {
             let _collection = (collection)? collection: this._collection;
             Sunshine.getConnection().collection(_collection).findOne(query, (err, result) => {
-                if (err) reject(err);
-                if (!result) resolve(null);
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                if (!result || result === null) {
+                    resolve(null)
+                    return;
+                };
 
                 let t = null;
                 if (type)
@@ -84,8 +85,14 @@ export class Model extends Document{
     static findOne<T extends Model>(query, fields?: object):Promise<T> {
         return new Promise((resolve, reject) => {
             Sunshine.getConnection().collection(this._collection).findOne(query, fields, (err, result) => {
-                if (err) reject(err);
-                if (!result) resolve(null);
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                if (!result || result === null) {
+                    resolve(null)
+                    return;
+                };
 
                 let t = (new this()).__elevate(result);
 
