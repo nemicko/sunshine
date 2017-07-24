@@ -240,6 +240,12 @@ export class QueryPointer<T extends Model>{
                 let promises = [];
                 let documents = [];
 
+                // empty result set, return empty array
+                if (!results || results === null) {
+                    resolve([]);
+                    return;
+                }
+
                 if (type) {
                     results.forEach(doc => {
                         let t = (new type()).__elevate(doc);
@@ -259,9 +265,6 @@ export class QueryPointer<T extends Model>{
                 Promise.all(promises).then(result => {
                     resolve(documents);
                 });
-
-                //results.map(doc => { return (new type()).__elevate(doc); } ));
-                //resolve(results.map(doc => { return (new this._document()).__elevate(doc); }));
             });
         });
     }

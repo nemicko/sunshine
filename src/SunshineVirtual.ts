@@ -8,7 +8,7 @@ const MongoInMemory = require('mongo-in-memory');
  *  With assistance of mongo-in-memory a virtual MongoDB instance is started
  *  and connected.
  *  All changes are NOT persisted, after application exit, MongoDB instance
- *  ist shutdown and data deleted.
+ *  is shutdown and data deleted.
  *
  *  @ Michael Hasler
  */
