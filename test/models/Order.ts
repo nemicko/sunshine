@@ -42,13 +42,14 @@ export class Item extends EmbeddedModel{
 
     constructor(data?: any){
         super(data);
-        this.__ignoredAttributes = ['_article'];
+        this.__ignoredAttributes = ['_article', 'articles'];
     }
 
     _id: ObjectID;
 
     article_id: ObjectID;
     _article?: Article;
+    articles?: Array<Article>;
 
     amount: number;
     netValue: number;

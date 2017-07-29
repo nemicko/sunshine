@@ -16,10 +16,11 @@ import {Article} from "./models/Article";
  */
 describe('Custom behavorial tests', function () {
 
-    it("Ignored attributes are not persisted", async () => {
+    it("Ignored (underline-prefix) attributes are not persisted", async () => {
 
         const item = new Item();
         item._article = new Article();
+        item.articles = [new Article()];
         item.amount = 100;
 
         const order = new Order();
@@ -32,6 +33,20 @@ describe('Custom behavorial tests', function () {
 
         expect(pOrder.items[0]).to.haveOwnProperty("amount");
         expect(pOrder.items[0]).to.not.haveOwnProperty("_article");
+        expect(pOrder.items[0]).to.not.haveOwnProperty("articles");
+
+        // JSONfiy the created Order
+        const json:any = order.toJSON(true);
+        expect(json.items[0]).to.haveOwnProperty("amount");
+        expect(json.items[0]).to.haveOwnProperty("_article");
+        expect(json.items[0]).to.haveOwnProperty("articles");
+
+        // JSONfiy the loaded Order
+        const pJson:any = pOrder.toJSON(true);
+        expect(pJson.items[0]).to.haveOwnProperty("amount");
+        expect(pJson.items[0]).to.not.haveOwnProperty("_article");
+        expect(pJson.items[0]).to.not.haveOwnProperty("articles");
+
 
         return true;
     });

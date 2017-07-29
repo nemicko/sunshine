@@ -23,7 +23,7 @@ export class Model extends Document{
     save():Promise<boolean>{
         if (this.hasOwnProperty("_id")){
             return new Promise((resolve, reject) => {
-                let _doc = this.fetchDocument(this, false, false);
+                let _doc = this.fetchDocument(this, false, true, false);
                 let collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
                 if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
                 this.encryptDocument(_doc);
@@ -38,7 +38,7 @@ export class Model extends Document{
 
     create():Promise<boolean>{
         return new Promise((resolve, reject) => {
-            let _doc = this.fetchDocument(this, false, false);
+            let _doc = this.fetchDocument(this, false, true, false);
             let collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
             if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
 
@@ -94,7 +94,7 @@ export class Model extends Document{
                     return;
                 };
 
-                let t = (new this()).__elevate(result);
+                const t = <T> (new this()).__elevate(result);
 
                 if (t.__autoPopulate){
                     t.populateAll().then(success => {

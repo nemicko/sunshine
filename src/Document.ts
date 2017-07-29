@@ -12,24 +12,24 @@ const objectIdRe = /^[0-9a-fA-F]{24}$/;
  *
  *  @ Michael Hasler
  */
-export class Document{
+export class Document {
 
     /**
      * Attributes which will not be saved
      */
-    protected __ignoredAttributes:Array<string>;
+    protected __ignoredAttributes: Array<string>;
 
     /**
      * Attributes which will not be saved
-     * nor return when toObject/toJSON is called
+     * nor existing when toObject/toJSON is called
      */
-    protected __hiddenAttributes:Array<string>;
+    protected __hiddenAttributes: Array<string>;
 
     /**
      * Autopopulate the given fields, when model
      * is loaded
      */
-    public __autoPopulate:boolean;
+    public __autoPopulate: boolean;
 
     /**
      * Save timestamp on every update
@@ -48,7 +48,7 @@ export class Document{
      */
     private __encrypted: Array<string>;
 
-    constructor(data?: any){
+    constructor(data?: any) {
         this.__autoPopulate = false;
         this.__ignoredAttributes = [];
         this.__hiddenAttributes = [];
@@ -63,7 +63,7 @@ export class Document{
      * @returns {Document}
      * @private
      */
-    public __elevate(data){
+    public __elevate(data) {
         this.decryptDocument(data);
         this.upgradeObject(this, data);
         return this;
@@ -118,9 +118,16 @@ export class Document{
         return target;
     }
 
-    public fetchDocument(document, populated: boolean = false, hidden: boolean = true) {
+    /**
+     *
+     * @param document
+     * @param {boolean} populated: (true) All ignored attributes are available
+     * @param {boolean} hidden: (true) All hidden attributes are available
+     * @returns {any}
+     */
+    public fetchDocument(document, populated: boolean = false, hidden: boolean = false, ignored: boolean = true) {
         const _doc = {};
-        const filter = (populated)? "__" : "_";
+        const filter = (populated) ? "__" : "_";
 
         // in case document is ObjectID
         if (document instanceof ObjectID)
@@ -131,29 +138,31 @@ export class Document{
 
         for (var propertyName in document) {
             if (!propertyName.startsWith(filter)) {
+                if (document.__ignoredAttributes && !ignored)
+                    if (document.__ignoredAttributes.indexOf(propertyName) != -1) continue;
+
+                if (document.__hiddenAttributes && !hidden)
+                    if (document.__hiddenAttributes.indexOf(propertyName) != -1) continue;
+
                 if (document[propertyName] instanceof ObjectID) {
                     _doc[propertyName] = document[propertyName];
                 } else if (document[propertyName] instanceof Array) {
                     _doc[propertyName] = document[propertyName].map(item => {
-                        return this.fetchDocument(item, populated);
+                        return this.fetchDocument(item, populated, hidden, ignored);
                     });
                 } else {
-                    //console.log(typeof document[propertyName]);
                     if (document[propertyName] instanceof Document) {
-                        if (this.__ignoredAttributes.indexOf(propertyName) == -1)
-                            if (this.__hiddenAttributes.indexOf(propertyName) == -1 || !hidden)
-                            _doc[propertyName] = this.fetchDocument(document[propertyName], populated);
+                        _doc[propertyName] = this.fetchDocument(document[propertyName], populated, hidden, ignored);
                     } else {
-                        if (this.__ignoredAttributes.indexOf(propertyName) == -1)
-                            if (this.__hiddenAttributes.indexOf(propertyName) == -1 || !hidden)
-                            _doc[propertyName] = document[propertyName];
+                        _doc[propertyName] = document[propertyName];
                     }
                 }
+
             } else {
-                if (propertyName == "_id"){
+                if (propertyName == "_id") {
                     _doc["_id"] = document._id;
                 }
-                if (propertyName == "__encrypted"){
+                if (propertyName == "__encrypted") {
                     if (document.__encrypted)
                         _doc['__encrypted'] = document.__encrypted;
                 }
@@ -162,10 +171,10 @@ export class Document{
         return _doc;
     }
 
-    protected encryptDocument(doc: any){
-        if (this.__encryptedFields){
+    protected encryptDocument(doc: any) {
+        if (this.__encryptedFields) {
             doc.__encrypted = [];
-            for(const field of this.__encryptedFields){
+            for (const field of this.__encryptedFields) {
                 doc[field] = this.encrypt(doc[field]);
                 doc.__encrypted.push(field);
             }
@@ -174,9 +183,9 @@ export class Document{
             delete doc.__encrypted;
     }
 
-    protected decryptDocument(doc: any){
-        if (doc.__encrypted){
-            for(const field of doc.__encrypted){
+    protected decryptDocument(doc: any) {
+        if (doc.__encrypted) {
+            for (const field of doc.__encrypted) {
                 doc[field] = this.decrypt(doc[field]);
             }
         }
@@ -191,11 +200,11 @@ export class Document{
         return CryptoJS.AES.encrypt(clearText, Sunshine.getEncryptionKey()).toString();
     };
 
-    public toObject(populated?: boolean){
-        return this.fetchDocument(this, populated);
+    public toObject(populated?: boolean) {
+        return this.fetchDocument(this, populated, false, true);
     }
 
-    public toJSON(populated?: boolean){
+    public toJSON(populated?: boolean) {
         return this.toObject(populated);
     }
 }
