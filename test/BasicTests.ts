@@ -52,6 +52,7 @@ describe('Basic attribute persistence tests', function () {
         const update = {
             _id: customer._id.toString(),
             firstname: "Markus",
+            lastname: "Müller"
         };
 
         customer.__elevate(update);
@@ -61,6 +62,7 @@ describe('Basic attribute persistence tests', function () {
         await customer.save();
 
         expect(customer.firstname).to.be.equal("Markus");
+        expect(customer.lastname).to.be.equal("Müller");
 
         return;
     });
@@ -70,6 +72,20 @@ describe('Basic attribute persistence tests', function () {
         let customer = await Customer.findOne({ _id: "null" });
 
         expect(customer).to.be.null;
+
+    });
+
+    it("Query (multiple) with select", async () => {
+
+        // find all fields
+        let customer = await Customer.find({}).toArray();
+        let keys = Object.keys(customer[0]);
+        expect(keys.length).to.be.equal(7);
+
+        // find only one field
+        customer = await Customer.find({}, { firstname: true }).toArray();
+        keys = Object.keys(customer[0]);
+        expect(keys.length).to.be.equal(6);
 
     });
 

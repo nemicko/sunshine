@@ -82,6 +82,7 @@ export class Model extends Document{
         });
     }
 
+
     static findOne<T extends Model>(query, fields?: object):Promise<T> {
         return new Promise((resolve, reject) => {
             Sunshine.getConnection().collection(this._collection).findOne(query, fields, (err, result) => {
@@ -103,15 +104,14 @@ export class Model extends Document{
                 } else {
                     resolve(t);
                 }
-
             });
         });
     }
 
-    static find<T extends Model>(query, collection?: string):QueryPointer<T>{
+    static find<T extends Model>(query, fields?: any, collection?: string):QueryPointer<T>{
         let _collection = (collection)? collection: this._collection;
 
-        let queryPointer = Sunshine.getConnection().collection(_collection).find(query);
+        let queryPointer = Sunshine.getConnection().collection(_collection).find(query, fields);
         return new QueryPointer<T>(queryPointer, this);
     }
 
@@ -159,7 +159,7 @@ export class Model extends Document{
         if (this[_name]) {
             return this[_name]
         } else {
-            this[_name] = await Model.find<T>({ _id : { $in: _ids }}, collection).toArray(type);
+            this[_name] = await Model.find<T>({ _id : { $in: _ids }}, {},  collection).toArray(type);
         }
         return this[_name];
     }
