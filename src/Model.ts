@@ -136,8 +136,20 @@ export class Model extends Document{
             let queryPointer = Sunshine.getConnection().collection(_collection).group(query, {}, {}, results => {
                 resolve(results);
             });
-        })
+        });
+    }
 
+    static update(criteria: any, update: any):Promise<any>{
+        let _collection = this._collection;
+
+        return new Promise((resolve, reject) => {
+            Sunshine.getConnection()
+                .collection(_collection)
+                .update(criteria, update, function(err, result) {
+                    if (err) reject (err);
+                    resolve(result);
+                });
+        });
     }
 
     static collection():Collection{

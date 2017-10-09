@@ -89,5 +89,22 @@ describe('Basic attribute persistence tests', function () {
 
     });
 
+    it("Update document", async () => {
+
+        const customer = new Customer();
+        customer.firstname = "Michael";
+        await customer.save();
+
+        // update property
+        await Customer.update({ _id : customer._id }, {
+            firstname: "Markus"
+        });
+
+        // find updated model
+        const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
+        expect(customerUpdated.firstname).to.be.equal("Markus");
+
+    });
+
 });
 
