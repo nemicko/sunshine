@@ -8,11 +8,13 @@
 import {Document} from "./Document";
 import {Sunshine} from "./Sunshine";
 import {ObjectID, Collection} from "mongodb";
+import {EmbeddedModel} from "./EmbeddedModel";
 
 export class Model extends Document{
 
     // name of collection
     static _collection:string;
+    _embedded:Array<string>;
 
     _id: ObjectID;
 
@@ -95,7 +97,19 @@ export class Model extends Document{
                     return;
                 };
 
+                // parse doc
                 const t = <T> (new this()).__elevate(result);
+
+                // parse embedded
+                if (this.prototype && this.prototype._embedded) {
+                    for (const em of this.prototype._embedded) {
+                        if (t[em] instanceof Array) {
+                            t[em] = t[em].map(element => {
+                                return new EmbeddedModel(element);
+                            });
+                        }
+                    }
+                }
 
                 if (t.__autoPopulate){
                     t.populateAll().then(success => {
@@ -139,13 +153,13 @@ export class Model extends Document{
         });
     }
 
-    static update(criteria: any, update: any):Promise<any>{
+    static update(criteria: any, update: any, options?: any):Promise<any>{
         let _collection = this._collection;
 
         return new Promise((resolve, reject) => {
             Sunshine.getConnection()
                 .collection(_collection)
-                .update(criteria, update, function(err, result) {
+                .update(criteria, update, options, function(err, result) {
                     if (err) reject (err);
                     resolve(result);
                 });
@@ -283,14 +297,86 @@ export class QueryPointer<T extends Model>{
 
 }
 
-
+/**
+ * Decorator for Collection-name
+ *
+ * @param {string} name
+ * @returns {(target) => any}
+ * @constructor
+ */
 export function Collection(name: string) {
     return (target) => {
         target._collection = name;
     }
 }
 
+/**
+ * Decorator for objectId type
+ */
+export function objectid() {
+    return (target: any, key: string) => {
+        let pKey = `_${key}`;
 
+        // called at runtime to access (this) as instance of class
+        let init = function (isGet: boolean) {
+            return function (newVal?) {
+
+                // Hidden property
+                Object.defineProperty(this, pKey, {value: 0, enumerable: false, configurable: true, writable: true});
+
+                // Public property
+                Object.defineProperty(this, key, {
+                    get: () => {
+                        return this[pKey];
+                    },
+                    set: (val) => {
+                        if (val instanceof ObjectID){
+                            this[pKey] = val;
+                        } else {
+                            try {
+                                this[pKey] = ObjectID.createFromHexString(val);
+                            } catch (exception){
+                                this[pKey] = null;
+                            }
+                        }
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+
+                // Set / get values
+                if (isGet) {
+                    return this[key];
+                } else {
+                    this[key] = newVal;
+                }
+            };
+        };
+
+        // Will be called on first execution and replaced
+        return Object.defineProperty(target, key, {
+            get: init(true),
+            set: init(false),
+            enumerable: true,
+            configurable: true
+        });
+    };
+}
+//}
+
+/**
+ * Reference embedded
+ *
+ * @param {boolean} value
+ * @returns {(target: any, propertyKey: string, descriptor: PropertyDescriptor) => any}
+ */
+// TODO: Complete embedded parsing
+export function embedded() {
+    return function (target: any, propertyKey: string) {
+        if (!target._embedded) target._embedded = [];
+        target._embedded.push(propertyKey);
+    };
+}
 
 
 

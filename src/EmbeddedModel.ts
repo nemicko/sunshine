@@ -4,8 +4,9 @@
  *  MIT License
  *  Copyright (c) 2017 Michael Hasler
  */
+
+import {ObjectID} from "mongodb";
 import {Document} from "./Document";
-import {ObjectID, Collection} from "mongodb";
 
 export class EmbeddedModel extends Document{
 

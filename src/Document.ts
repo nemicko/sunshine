@@ -1,6 +1,7 @@
 import {ObjectID} from "mongodb";
 import {Sunshine} from "./Sunshine";
 import * as CryptoJS from "crypto-js";
+import {EmbeddedModel} from "./EmbeddedModel";
 
 const objectIdRe = /^[0-9a-fA-F]{24}$/;
 
@@ -103,6 +104,8 @@ export class Document {
                 target[propertyName] = update[propertyName].map((item) => {
                     return this.upgradeObject({}, item);
                 });
+            } else if (typeof target[propertyName] === "object"){
+                    target[propertyName] = this.upgradeObject(target[propertyName], update[propertyName]);
             } else {
                 if (typeof update[propertyName] === "string") {
                     if (objectIdRe.test(update[propertyName])) {
@@ -157,7 +160,6 @@ export class Document {
                         _doc[propertyName] = document[propertyName];
                     }
                 }
-
             } else {
                 if (propertyName == "_id") {
                     _doc["_id"] = document._id;

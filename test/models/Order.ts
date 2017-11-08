@@ -27,7 +27,7 @@ import {ObjectID} from "mongodb";
 import {Customer} from "./Customer";
 
 import {EmbeddedModel} from "../../src/EmbeddedModel";
-import {Collection, Model} from "../../src/Model";
+import {Collection, embedded, Model, objectid} from "../../src/Model";
 
 export declare type Log = {
     type: string,
@@ -69,9 +69,11 @@ export class Order extends Model {
         this.__hiddenAttributes = ['paymentDetails'];
     }
 
+    @embedded()
     items : Array<Item>;
     number: string;
 
+    @objectid()
     customer_id: ObjectID;
     _customer?: Customer;
 
@@ -79,6 +81,8 @@ export class Order extends Model {
         creditCard: number,
         cvc: number
     };
+
+    attributes: any;
 
     created: Date;
     updated: Date;

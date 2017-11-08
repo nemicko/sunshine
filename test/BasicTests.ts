@@ -1,7 +1,8 @@
-import {Order} from "./models/Order";
+import {Item, Order} from "./models/Order";
 import {expect} from "chai";
 import {ObjectID} from "mongodb";
 import {Customer} from "./models/Customer";
+import {EmbeddedModel} from "../src/EmbeddedModel";
 
 /**
  * Sunshine V1
@@ -89,6 +90,24 @@ describe('Basic attribute persistence tests', function () {
 
     });
 
+    it("Embedded Models are parsed", async() => {
+
+        let order = new Order();
+        order.customer_id = ObjectID.createFromHexString("58f0c0ac235ea70d83e6c672");
+        order._customer = new Customer();
+        order._customer.firstname = "Michael";
+        order.items.push(new Item({
+            amount: 20,
+        }));
+
+        await order.save();
+
+        let orderRecover = await Order.findOne<Order>({ _id: order._id });
+
+        expect(orderRecover.items[0]).to.be.instanceOf(EmbeddedModel);
+
+    });
+
     it("Update document", async () => {
 
         const customer = new Customer();
@@ -103,6 +122,38 @@ describe('Basic attribute persistence tests', function () {
         // find updated model
         const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
         expect(customerUpdated.firstname).to.be.equal("Markus");
+
+    });
+
+    it("Create document with auto-type parse objectid", async () => {
+
+        const order = new Order();
+        (order as any).customer_id = "5a0368ea7bb6ebb9fc10b8e8";
+
+        await order.save();
+
+        const orderSaved = await Order.findOne<Order>({ _id: order._id });
+        expect(orderSaved.customer_id).to.be.instanceof(ObjectID);
+
+    });
+
+    it("Child property is saved correctly from basis", async () => {
+
+        const order = new Order();
+        order.attributes = {
+            customer_id: ObjectID.createFromHexString("5a0368ea7bb6ebb9fc10b8e8")
+        };
+        await order.save();
+
+        order.__elevate({
+            attributes: {
+                customer_id: "5a0368ea7bb6ebb9fc10b8e8"
+            }
+        });
+        await order.save();
+
+        const orderSaved = await Order.findOne<Order>({ _id: order._id });
+        expect(orderSaved.attributes.customer_id).to.be.instanceof(ObjectID);
 
     });
 
