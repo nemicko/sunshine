@@ -1,8 +1,9 @@
 import {Item, Order} from "./models/Order";
 import {expect} from "chai";
-import {ObjectID} from "mongodb";
+import {Binary, ObjectID} from "mongodb";
 import {Customer} from "./models/Customer";
 import {EmbeddedModel} from "../src/EmbeddedModel";
+import {Article} from "./models/Article";
 
 /**
  * Sunshine V1
@@ -25,9 +26,10 @@ describe('Basic attribute persistence tests', function () {
         return;
     });
 
-    it("Testing correct type persistance", async () => {
+    it("Testing correct type persistence", async () => {
 
         let order = new Order();
+        order.created = new Date();
         order.customer_id = ObjectID.createFromHexString("58f0c0ac235ea70d83e6c672");
         order._customer = new Customer();
         order._customer.firstname = "Michael";
@@ -36,10 +38,13 @@ describe('Basic attribute persistence tests', function () {
 
         await order.save();
 
-        expect(order.created).to.be.an("Date");
-        expect(order.customer_id).to.be.instanceof(ObjectID);
-        expect((order as any).testString).to.be.an("string");
-        expect((order as any).num).to.be.an("number");
+        console.log(order._id);
+        let newOrder = await Order.findOne<Order>({ _id : order._id });
+
+        expect(newOrder.created).to.be.an("Date");
+        expect(newOrder.customer_id).to.be.instanceof(ObjectID);
+        expect((newOrder as any).testString).to.be.an("string");
+        expect((newOrder as any).num).to.be.an("number");
 
         return;
     });
@@ -154,6 +159,21 @@ describe('Basic attribute persistence tests', function () {
 
         const orderSaved = await Order.findOne<Order>({ _id: order._id });
         expect(orderSaved.attributes.customer_id).to.be.instanceof(ObjectID);
+
+    });
+
+    it("Binary type is saved and retrieved correctly", async () => {
+
+        const article = new Article();
+
+        const buffer = Buffer.from([1, 2, 3]);
+        article.binaryField = new Binary(buffer);
+
+        await article.save();
+        expect(article.binaryField).to.be.instanceOf(Binary);
+
+        const articleSaved = await Article.findOne<Article>({ _id: article._id });
+        expect(articleSaved.binaryField).to.be.instanceOf(Binary);
 
     });
 

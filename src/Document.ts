@@ -1,7 +1,7 @@
-import {ObjectID} from "mongodb";
+import {Binary, ObjectID} from "mongodb";
 import {Sunshine} from "./Sunshine";
 import * as CryptoJS from "crypto-js";
-import {EmbeddedModel} from "./EmbeddedModel";
+
 
 const objectIdRe = /^[0-9a-fA-F]{24}$/;
 
@@ -91,31 +91,33 @@ export class Document {
                 && !propertyName.startsWith("__encrypted")) {
                 continue;
             }
-
             if (target[propertyName] instanceof ObjectID) {
                 if (update[propertyName] instanceof ObjectID) {
                     target[propertyName] = update[propertyName];
                 } else {
                     target[propertyName] = ObjectID.createFromHexString(update[propertyName]);
                 }
+            } else if (typeof update === "string"){
+                target = update;
             } else if (typeof target[propertyName] === "string") {
                 target[propertyName] = update[propertyName];
             } else if (target[propertyName] instanceof Array) {
                 target[propertyName] = update[propertyName].map((item) => {
                     return this.upgradeObject({}, item);
                 });
-            } else if (typeof target[propertyName] === "object"){
-                    target[propertyName] = this.upgradeObject(target[propertyName], update[propertyName]);
-            } else {
-                if (typeof update[propertyName] === "string") {
-                    if (objectIdRe.test(update[propertyName])) {
-                        target[propertyName] = ObjectID.createFromHexString(update[propertyName]);
-                    } else {
-                        target[propertyName] = update[propertyName];
-                    }
-                } else {
+            } else if (typeof update[propertyName] === "string") {
+                if (objectIdRe.test(update[propertyName])) {
+                    target[propertyName] = ObjectID.createFromHexString(update[propertyName]);
+                }
+                else {
                     target[propertyName] = update[propertyName];
                 }
+            } else if (update[propertyName] instanceof Date){
+                target[propertyName] = update[propertyName];
+            } else if (typeof target[propertyName] === "object"){
+                target[propertyName] = this.upgradeObject(target[propertyName], update[propertyName]);
+            } else {
+                target[propertyName] = update[propertyName];
             }
         }
         return target;
@@ -156,7 +158,15 @@ export class Document {
                 } else {
                     if (document[propertyName] instanceof Document) {
                         _doc[propertyName] = this.fetchDocument(document[propertyName], populated, hidden, ignored);
-                    } else {
+                    } else if (document[propertyName] instanceof Number) {
+                        _doc[propertyName] = document[propertyName];
+                    } else if (document[propertyName] instanceof Date) {
+                        _doc[propertyName] = document[propertyName];
+                    } else if (document[propertyName] instanceof Binary) {
+                        _doc[propertyName] = document[propertyName];
+                    } else if (document[propertyName] instanceof Object) {
+                        _doc[propertyName] = this.fetchDocument(document[propertyName]);
+                    } else { // any other type
                         _doc[propertyName] = document[propertyName];
                     }
                 }

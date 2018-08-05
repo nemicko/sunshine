@@ -7,8 +7,8 @@
 
 import {Document} from "./Document";
 import {Sunshine} from "./Sunshine";
-import {ObjectID, Collection} from "mongodb";
 import {EmbeddedModel} from "./EmbeddedModel";
+import {ObjectID, Collection} from "mongodb";
 
 export class Model extends Document{
 
@@ -161,7 +161,13 @@ export class Model extends Document{
                 .collection(_collection)
                 .update(criteria, update, options, function(err, result) {
                     if (err) reject (err);
-                    resolve(result);
+                    Sunshine.getConnection()
+                        .collection(_collection)
+                        .update(criteria, {
+                            $set: { updated : new Date() }
+                        }, {}, function (err, result) {
+                            resolve(result);
+                        });
                 });
         });
     }

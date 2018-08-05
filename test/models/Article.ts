@@ -22,12 +22,15 @@
  */
 
 import {Collection, Model} from "../../src/Model";
+import {Binary} from "mongodb";
 
 @Collection("articles")
 export class Article extends Model{
 
     name: string;
     description: string | Object;
+
+    binaryField: Binary;
 
     price: number;
     stock: number;
