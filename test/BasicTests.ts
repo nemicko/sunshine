@@ -4,6 +4,7 @@ import {Binary, ObjectID} from "mongodb";
 import {Customer} from "./models/Customer";
 import {EmbeddedModel} from "../src/EmbeddedModel";
 import {Article} from "./models/Article";
+import {Sunshine} from "../src/Sunshine";
 
 /**
  * Sunshine V1
@@ -86,12 +87,12 @@ describe('Basic attribute persistence tests', function () {
         // find all fields
         let customer = await Customer.find({}).toArray();
         let keys = Object.keys(customer[0]);
-        expect(keys.length).to.be.equal(7);
+        expect(keys.length).to.be.equal(4);
 
         // find only one field
         customer = await Customer.find({}, { firstname: true }).toArray();
         keys = Object.keys(customer[0]);
-        expect(keys.length).to.be.equal(6);
+        expect(keys.length).to.be.equal(3);
 
     });
 
@@ -159,6 +160,26 @@ describe('Basic attribute persistence tests', function () {
 
         const orderSaved = await Order.findOne<Order>({ _id: order._id });
         expect(orderSaved.attributes.customer_id).to.be.instanceof(ObjectID);
+
+    });
+
+    it("Encryption decorator", async () => {
+
+        const article = new Article();
+        article.encryptedProperty = "Hello Rijeka";
+
+        await article.save();
+
+        const dbValue = await (new Promise((resolve, reject) => {
+            Sunshine.getConnection().collection("articles").findOne({ _id: article._id }).then((article) => {
+                resolve(article.encryptedProperty)
+            })
+        }));
+
+        expect(dbValue).not.to.be.equal("Hello Rijeka");
+
+        const articleLoaded = await Article.findOne<Article>({ _id : article._id });
+        expect(articleLoaded.encryptedProperty).to.be.equal("Hello Rijeka");
 
     });
 

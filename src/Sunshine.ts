@@ -1,4 +1,4 @@
-import {MongoClient, Collection} from "mongodb";
+import {MongoClient, Collection, Db} from "mongodb";
 
 /**
  *  Sunshine DAO Connector
@@ -7,7 +7,7 @@ import {MongoClient, Collection} from "mongodb";
  */
 export class Sunshine{
 
-    protected static db;
+    protected static db:Db;
     protected static properties;
     protected static isConnected:boolean = false;
 
@@ -39,13 +39,21 @@ export class Sunshine{
         });
     }
 
+    static injectConnection(db: Db){
+        this.db = db;
+        this.isConnected = true;
+    }
+
     static getConnection(){
-        if (!Sunshine.isConnected) return null;
+        if (!Sunshine.isConnected) {
+            throw new Error("No connection available :(");
+        }
         return Sunshine.db;
     }
 
-    static disconnect():boolean{
-        return Sunshine.db.close();
+    static async disconnect():Promise<boolean>{
+        await Sunshine.db.close();
+        return true;
     }
 
 }

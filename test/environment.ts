@@ -21,6 +21,7 @@ before(done => {
 
     try {
         SunshineVirtual.connectVirtual().then(success => {
+            SunshineVirtual.setEncryptionKey("123456789");
             done();
         }).catch(exception => {
             console.log(exception);

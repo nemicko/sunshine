@@ -30,7 +30,7 @@ export class Document {
      * Autopopulate the given fields, when model
      * is loaded
      */
-    public __autoPopulate: boolean;
+    public __autoPopulate: boolean = false;
 
     /**
      * Save timestamp on every update
@@ -44,16 +44,10 @@ export class Document {
      */
     public __encryptedFields: Array<string>;
 
-    /**
-     * Fields already encrypted
-     */
-    private __encrypted: Array<string>;
-
     constructor(data?: any) {
-        this.__autoPopulate = false;
-        this.__ignoredAttributes = [];
-        this.__hiddenAttributes = [];
-        this.__encryptedFields = [];
+        //this.__autoPopulate = false;
+        //this.__ignoredAttributes = [];
+        //this.__hiddenAttributes = [];
     }
 
     /**
@@ -63,6 +57,8 @@ export class Document {
      * @param data
      * @returns {Document}
      * @private
+     *
+     * @deprecated Please use alternate save parsing
      */
     public __elevate(data) {
         this.decryptDocument(data);
@@ -87,8 +83,7 @@ export class Document {
 
             // skip all dynamic properties
             if (propertyName.startsWith("_")
-                && !propertyName.startsWith("_id")
-                && !propertyName.startsWith("__encrypted")) {
+                && !propertyName.startsWith("_id")) {
                 continue;
             }
             if (target[propertyName] instanceof ObjectID) {
@@ -174,10 +169,6 @@ export class Document {
                 if (propertyName == "_id") {
                     _doc["_id"] = document._id;
                 }
-                if (propertyName == "__encrypted") {
-                    if (document.__encrypted)
-                        _doc['__encrypted'] = document.__encrypted;
-                }
             }
         }
         return _doc;
@@ -185,19 +176,16 @@ export class Document {
 
     protected encryptDocument(doc: any) {
         if (this.__encryptedFields) {
-            doc.__encrypted = [];
+            //doc.__encrypted = [];
             for (const field of this.__encryptedFields) {
                 doc[field] = this.encrypt(doc[field]);
-                doc.__encrypted.push(field);
             }
         }
-        if (doc.__encrypted.length == 0)
-            delete doc.__encrypted;
     }
 
     protected decryptDocument(doc: any) {
-        if (doc.__encrypted) {
-            for (const field of doc.__encrypted) {
+        if (this.__encryptedFields) {
+            for (const field of this.__encryptedFields) {
                 doc[field] = this.decrypt(doc[field]);
             }
         }

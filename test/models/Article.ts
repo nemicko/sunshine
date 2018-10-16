@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH T
  */
 
-import {Collection, Model} from "../../src/Model";
+import {Collection, Encrypted, Model} from "../../src/Model";
 import {Binary} from "mongodb";
 
 @Collection("articles")
@@ -34,6 +34,9 @@ export class Article extends Model{
 
     price: number;
     stock: number;
+
+    @Encrypted()
+    encryptedProperty: string;
 
 }
 

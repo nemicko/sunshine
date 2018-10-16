@@ -29,10 +29,17 @@ export class Model extends Document{
                 let collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
                 if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
                 this.encryptDocument(_doc);
-                collection.replaceOne({ _id: this._id }, _doc, {upsert: true}, (err, result) => {
-                    if (err) reject(err);
-                    resolve(true);
-                });
+                if (collection.replaceOne) {
+                    collection.replaceOne({_id: this._id}, _doc, {upsert: true}, (err, result) => {
+                        if (err) reject(err);
+                        resolve(true);
+                    });
+                } else {
+                    collection.update({_id: this._id}, _doc, {upsert: true}, (err, result) => {
+                        if (err) reject(err);
+                        resolve(true);
+                    });
+                }
             });
         } else
             return this.create();
@@ -45,11 +52,19 @@ export class Model extends Document{
             if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
 
             this.encryptDocument(_doc);
-            collection.insertOne(_doc, (err, result) => {
-                if (err) reject(err);
-                this._id = result.insertedId;
-                resolve(true);
-            });
+            if (collection.insertOne) {
+                collection.insertOne(_doc, (err, result) => {
+                    if (err) reject(err);
+                    this._id = result.insertedId;
+                    resolve(true);
+                });
+            } else {
+                collection.insert(_doc, (err, result) => {
+                    if (err) reject(err);
+                    this._id = result.insertedId;
+                    resolve(true);
+                });
+            }
         });
     }
 
@@ -62,10 +77,9 @@ export class Model extends Document{
                     return;
                 }
                 if (!result || result === null) {
-                    resolve(null)
+                    resolve(null);
                     return;
-                };
-
+                }
                 let t = null;
                 if (type)
                     t = (new type()).__elevate(result);
@@ -93,10 +107,9 @@ export class Model extends Document{
                     return;
                 }
                 if (!result || result === null) {
-                    resolve(null)
+                    resolve(null);
                     return;
-                };
-
+                }
                 // parse doc
                 const t = <T> (new this()).__elevate(result);
 
@@ -139,7 +152,7 @@ export class Model extends Document{
     static group<T extends Model>(query):QueryPointer<T>{
         let _collection = this._collection;
 
-        let queryPointer = Sunshine.getConnection().collection(_collection).group(query);
+        let queryPointer = (<any>Sunshine.getConnection()).collection(_collection).group(query);
         return new QueryPointer<T>(queryPointer, this);
     }
 
@@ -147,7 +160,7 @@ export class Model extends Document{
         let _collection = this._collection;
 
         return new Promise((resolve, reject) => {
-            let queryPointer = Sunshine.getConnection().collection(_collection).group(query, {}, {}, results => {
+            let queryPointer = (<any>Sunshine.getConnection()).collection(_collection).group(query, {}, {}, results => {
                 resolve(results);
             });
         });
@@ -206,7 +219,7 @@ export class Model extends Document{
 
             Sunshine.getConnection().collection(_collection).remove(query, function(err, result){
                 if (err) reject(err);
-                resolve(err);
+                resolve(<any>err);
             });
         });
     }
@@ -384,6 +397,20 @@ export function embedded() {
     };
 }
 
+
+/**
+ * Reference encrypted
+ *
+ * @param {boolean} value
+ * @returns {(target: any, propertyKey: string, descriptor: PropertyDescriptor) => any}
+ */
+// TODO: Complete embedded parsing
+export function Encrypted() {
+    return function (target: any, propertyKey: string) {
+        if (!target.__encryptedFields) target.__encryptedFields = [];
+        target.__encryptedFields.push(propertyKey);
+    };
+}
 
 
 
