@@ -133,7 +133,7 @@ export class Document {
         if (document instanceof ObjectID)
             return document;
 
-        if (typeof(document) === "string")
+        if (typeof(document) === "string" || typeof(document) === 'number')
             return document;
 
         for (var propertyName in document) {
