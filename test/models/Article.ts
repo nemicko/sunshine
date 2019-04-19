@@ -35,6 +35,12 @@ export class Article extends Model{
     price: number;
     stock: number;
 
+    numberArray: Array<number>;
+
+    numberObjectArray: [{
+        data: Array<number>
+    }];
+
     @Encrypted()
     encryptedProperty: string;
 

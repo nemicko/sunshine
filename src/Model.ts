@@ -229,7 +229,8 @@ export class Model extends Document{
         let list = this.populatable();
         for (let key in this.populatable()) {
             let many = list[key].many;
-            if (!this[list[key].reference]) return true;
+            // If entry does not have reference set (null)
+            if (!this[list[key].reference]) continue;
             if (!list[key].many) {
                 let value = list[key];
                 await this.populate(value.type, this[value.reference], key, value.collection);

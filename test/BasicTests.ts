@@ -198,5 +198,20 @@ describe('Basic attribute persistence tests', function () {
 
     });
 
+    it("Array with number types", async () => {
+
+        const article = new Article();
+        article.numberArray = [1, 2, 3, 4, 5, 6];
+        article.numberObjectArray = [{
+            validator: "decimal-validator",
+            value: [10, 2]
+        }];
+        await article.save();
+
+        const articleSaved = await Article.findOne<Article>({ _id: article._id });
+        expect(articleSaved.numberArray[0]).to.be.a("number");
+
+    })
+
 });
 
