@@ -219,7 +219,7 @@ export class Model extends Document{
 
             Sunshine.getConnection().collection(_collection).remove(query, function(err, result){
                 if (err) reject(err);
-                resolve(<any>err);
+                resolve(<any>result);
             });
         });
     }
