@@ -11,6 +11,9 @@ export class Sunshine{
     protected static properties;
     protected static isConnected:boolean = false;
 
+    protected static reconnectTries: number = Number.MAX_VALUE;
+    protected static reconnectInterval: number = 1000;
+
     static setEncryptionKey(key: string){
         Sunshine.properties.encryptionKey = key;
     }
@@ -19,7 +22,10 @@ export class Sunshine{
         return Sunshine.properties.encryptionKey;
     }
 
-    static connect(hostname: string, username: string, password: string, database: string){
+    static connect(hostname: string, username: string, password: string, database: string, options?: {
+        reconnectTries: number,
+        reconnectInterval: number
+    }){
         return new Promise((resolve, reject) => {
 
             Sunshine.properties = {};
@@ -30,7 +36,12 @@ export class Sunshine{
             }
             URI += hostname + "/" + database;
 
-            MongoClient.connect(URI, function(err, db) {
+            options = {
+                reconnectTries: (options && options.reconnectTries) ? options.reconnectTries : Sunshine.reconnectTries,
+                reconnectInterval: (options && options.reconnectInterval) ? options.reconnectInterval : Sunshine.reconnectInterval
+            };
+
+            MongoClient.connect(URI, options, function(err, db) {
                 if (err) reject(err);
                 Sunshine.db = db;
                 Sunshine.isConnected = true;
