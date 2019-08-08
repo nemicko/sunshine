@@ -10,6 +10,7 @@ export class Sunshine{
     protected static db:Db;
     protected static properties;
     protected static isConnected:boolean = false;
+    private static mongoClient: MongoClient;
 
     protected static reconnectTries: number = Number.MAX_VALUE;
     protected static reconnectInterval: number = 1000;
@@ -27,7 +28,6 @@ export class Sunshine{
         reconnectInterval: number
     }){
         return new Promise((resolve, reject) => {
-
             Sunshine.properties = {};
 
             let URI = "mongodb://";
@@ -41,9 +41,10 @@ export class Sunshine{
                 reconnectInterval: (options && options.reconnectInterval) ? options.reconnectInterval : Sunshine.reconnectInterval
             };
 
-            MongoClient.connect(URI, options, function(err, db) {
+            MongoClient.connect(URI, options, function(err, mongoClient) {
                 if (err) reject(err);
-                Sunshine.db = db;
+                Sunshine.mongoClient = mongoClient;
+                Sunshine.db = mongoClient.db(database);
                 Sunshine.isConnected = true;
                 resolve(true);
             });
@@ -63,7 +64,7 @@ export class Sunshine{
     }
 
     static async disconnect():Promise<boolean>{
-        await Sunshine.db.close();
+        await this.mongoClient.close();
         return true;
     }
 

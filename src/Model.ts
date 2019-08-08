@@ -138,7 +138,7 @@ export class Model extends Document{
     static find<T extends Model>(query, fields?: any, collection?: string):QueryPointer<T>{
         let _collection = (collection)? collection: this._collection;
 
-        let queryPointer = Sunshine.getConnection().collection(_collection).find(query, fields);
+        let queryPointer = Sunshine.getConnection().collection(_collection).find(query).project(fields);
         return new QueryPointer<T>(queryPointer, this);
     }
 
@@ -166,6 +166,10 @@ export class Model extends Document{
         });
     }
 
+    /**
+     *
+     * @deprecated Please use updateOne, updateMany
+     */
     static update(criteria: any, update: any, options?: any):Promise<any>{
         let _collection = this._collection;
 
@@ -177,6 +181,44 @@ export class Model extends Document{
                     Sunshine.getConnection()
                         .collection(_collection)
                         .update(criteria, {
+                            $set: { updated : new Date() }
+                        }, {}, function (err, result) {
+                            resolve(result);
+                        });
+                });
+        });
+    }
+
+    static updateOne(criteria: any, update: any, options?: any):Promise<any>{
+        let _collection = this._collection;
+
+        return new Promise((resolve, reject) => {
+            Sunshine.getConnection()
+                .collection(_collection)
+                .updateOne(criteria, update, options, function(err, result) {
+                    if (err) reject (err);
+                    Sunshine.getConnection()
+                        .collection(_collection)
+                        .updateOne(criteria, {
+                            $set: { updated : new Date() }
+                        }, {}, function (err, result) {
+                            resolve(result);
+                        });
+                });
+        });
+    }
+
+    static updateMany(criteria: any, update: any, options?: any):Promise<any>{
+        let _collection = this._collection;
+
+        return new Promise((resolve, reject) => {
+            Sunshine.getConnection()
+                .collection(_collection)
+                .updateMany(criteria, update, options, function(err, result) {
+                    if (err) reject (err);
+                    Sunshine.getConnection()
+                        .collection(_collection)
+                        .updateMany(criteria, {
                             $set: { updated : new Date() }
                         }, {}, function (err, result) {
                             resolve(result);

@@ -128,7 +128,22 @@ describe('Basic attribute persistence tests', function () {
         // find updated model
         const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
         expect(customerUpdated.firstname).to.be.equal("Markus");
+    });
 
+    it("Update document (new updateOne)", async () => {
+
+        const customer = new Customer();
+        customer.firstname = "Michael";
+        await customer.save();
+
+        // update property
+        await Customer.updateOne({ _id : customer._id }, {
+            $set: { firstname: "Hans" }
+        });
+
+        // find updated model
+        const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
+        expect(customerUpdated.firstname).to.be.equal("Hans");
     });
 
     it("Create document with auto-type parse objectid", async () => {
@@ -203,15 +218,13 @@ describe('Basic attribute persistence tests', function () {
         const article = new Article();
         article.numberArray = [1, 2, 3, 4, 5, 6];
         article.numberObjectArray = [{
-            validator: "decimal-validator",
-            value: [10, 2]
+            data: [10, 2]
         }];
         await article.save();
 
         const articleSaved = await Article.findOne<Article>({ _id: article._id });
         expect(articleSaved.numberArray[0]).to.be.a("number");
-
-    })
+    });
 
 });
 

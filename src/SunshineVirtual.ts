@@ -1,6 +1,5 @@
 import {Sunshine} from "./Sunshine";
-
-const MongoInMemory = require('mongo-in-memory');
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 /**
  *  Sunshine DAO Virtual Connector
@@ -14,18 +13,27 @@ const MongoInMemory = require('mongo-in-memory');
  */
 export class SunshineVirtual extends Sunshine {
 
-    static connectVirtual(port?: number) {
+    static connectVirtual(port?: number, dbname?: string) {
         return new Promise((resolve, reject) => {
 
             Sunshine.properties = {};
 
             port = (port) ? port : 8000;
-            const mongoServerInstance = new MongoInMemory(port); //DEFAULT PORT is 27017
+            const mongoServerInstance = new MongoMemoryServer({
+                instance: {
+                    port: port,
+                    dbName: dbname ? dbname : "virtual"
+                }
+            });
 
-            mongoServerInstance.start((error, config) => {
+            mongoServerInstance.getConnectionString().then(async (connectionString) => {
+                const port = await mongoServerInstance.getPort();
+                const dbPath = await mongoServerInstance.getDbPath();
+                const dbName = await mongoServerInstance.getDbName();
 
-                this.connect("localhost:" + port, "", "", "virtual").then(function(success){
-                    resolve(true);
+
+                this.connect("localhost" + ":" + port,  "", "", dbName).then(function(success){
+                    resolve(success);
                 });
 
             });
