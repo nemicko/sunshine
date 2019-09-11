@@ -5,6 +5,7 @@ import {Customer} from "./models/Customer";
 import {EmbeddedModel} from "../src/EmbeddedModel";
 import {Article} from "./models/Article";
 import {Sunshine} from "../src/Sunshine";
+import {Document} from "../src/Document";
 
 /**
  * Sunshine V1
@@ -195,6 +196,18 @@ describe('Basic attribute persistence tests', function () {
 
         const articleLoaded = await Article.findOne<Article>({ _id : article._id });
         expect(articleLoaded.encryptedProperty).to.be.equal("Hello Rijeka");
+
+    });
+
+    it("Decrypt from old version", async () => {
+
+        const old = "U2FsdGVkX19TUsTPbRQ4oqde+oqOKMdtCa5HNTj7CrM=";
+
+        const doc = new Document();
+        // @ts-ignore
+        const clearText = doc.decrypt(old);
+
+        expect(clearText).to.be.equal("Hello Rijeka");
 
     });
 

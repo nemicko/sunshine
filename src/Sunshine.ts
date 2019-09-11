@@ -38,7 +38,9 @@ export class Sunshine{
 
             options = {
                 reconnectTries: (options && options.reconnectTries) ? options.reconnectTries : Sunshine.reconnectTries,
-                reconnectInterval: (options && options.reconnectInterval) ? options.reconnectInterval : Sunshine.reconnectInterval
+                reconnectInterval: (options && options.reconnectInterval) ? options.reconnectInterval : Sunshine.reconnectInterval,
+                // @ts-ignore
+                useNewUrlParser: true
             };
 
             MongoClient.connect(URI, options, function(err, mongoClient) {

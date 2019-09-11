@@ -1,6 +1,8 @@
 import {Binary, ObjectID} from "mongodb";
 import {Sunshine} from "./Sunshine";
 import * as CryptoJS from "crypto-js";
+import * as Crypto from "crypto";
+import * as crypto from "crypto";
 
 
 const objectIdRe = /^[0-9a-fA-F]{24}$/;
