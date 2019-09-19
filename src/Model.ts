@@ -192,18 +192,20 @@ export class Model extends Document{
     static updateOne(criteria: any, update: any, options?: any):Promise<any>{
         let _collection = this._collection;
 
+        if (update.$set){
+            update.$set.updated = new Date();
+        } else {
+            update.$set = {
+                updated: new Date()
+            }
+        }
+
         return new Promise((resolve, reject) => {
             Sunshine.getConnection()
                 .collection(_collection)
                 .updateOne(criteria, update, options, function(err, result) {
                     if (err) reject (err);
-                    Sunshine.getConnection()
-                        .collection(_collection)
-                        .updateOne(criteria, {
-                            $set: { updated : new Date() }
-                        }, {}, function (err, result) {
-                            resolve(result);
-                        });
+                    resolve(result);
                 });
         });
     }
@@ -211,21 +213,25 @@ export class Model extends Document{
     static updateMany(criteria: any, update: any, options?: any):Promise<any>{
         let _collection = this._collection;
 
+        if (update.$set){
+            update.$set.updated = new Date();
+        } else {
+            update.$set = {
+                updated: new Date()
+            }
+        }
+
         return new Promise((resolve, reject) => {
             Sunshine.getConnection()
                 .collection(_collection)
                 .updateMany(criteria, update, options, function(err, result) {
                     if (err) reject (err);
-                    Sunshine.getConnection()
-                        .collection(_collection)
-                        .updateMany(criteria, {
-                            $set: { updated : new Date() }
-                        }, {}, function (err, result) {
-                            resolve(result);
-                        });
+                    resolve(result);
                 });
         });
     }
+
+
 
     static collection():Collection{
         return Sunshine.getConnection().collection(this._collection);

@@ -131,6 +131,42 @@ describe('Basic attribute persistence tests', function () {
         expect(customerUpdated.firstname).to.be.equal("Markus");
     });
 
+    it("UpdateOne document", async () => {
+
+        const customer = new Customer();
+        customer.firstname = "Michael";
+        await customer.save();
+
+        // update property
+        await Customer.updateOne({ _id : customer._id }, {
+            $set: {
+                firstname: "Markus"
+            }
+        });
+
+        // find updated model
+        const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
+        expect(customerUpdated.firstname).to.be.equal("Markus");
+    });
+
+    it("UpdateMany document", async () => {
+
+        const customer = new Customer();
+        customer.firstname = "Michael";
+        await customer.save();
+
+        // update property
+        await Customer.updateMany({ _id : customer._id }, {
+            $set: {
+                firstname: "Markus"
+            }
+        });
+
+        // find updated model
+        const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
+        expect(customerUpdated.firstname).to.be.equal("Markus");
+    });
+
     it("Update document (new updateOne)", async () => {
 
         const customer = new Customer();
