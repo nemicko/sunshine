@@ -52,19 +52,11 @@ export class Model extends Document{
             if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
 
             this.encryptDocument(_doc);
-            if (collection.insertOne) {
-                collection.insertOne(_doc, (err, result) => {
-                    if (err) reject(err);
-                    this._id = result.insertedId;
-                    resolve(true);
-                });
-            } else {
-                collection.insert(_doc, (err, result) => {
-                    if (err) reject(err);
-                    this._id = result.insertedId;
-                    resolve(true);
-                });
-            }
+            collection.insertOne(_doc, (err, result) => {
+                if (err) reject(err);
+                this._id = result.insertedId;
+                resolve(true);
+            });
         });
     }
 
@@ -317,13 +309,29 @@ export class QueryPointer<T extends Model>{
         return new QueryPointer<T>(this._queryPointer, this._document);
     }
 
-    public async count():Promise<number>{
-        return await this._queryPointer.count();
+    public collation(properties: {
+        locale?: string,
+        caseLevel?: boolean,
+        caseFirst?: string,
+        strength?: number,
+        numericOrdering?: boolean,
+        alternate?: string,
+        maxVariable?: string,
+        backwards?: boolean
+    }): QueryPointer<T>{
+        this._queryPointer.collation(properties);
+        return new QueryPointer<T>(this._queryPointer, this._document);
     }
 
     public projection(fields: object):QueryPointer<T>{
         this._queryPointer.projection(fields);
         return new QueryPointer<T>(this._queryPointer, this._document);
+    }
+
+    // --- Close Pipeline -------------------------------------------------------
+
+    public async count():Promise<number>{
+        return await this._queryPointer.count();
     }
 
     public async toArray(type?: { new() : T }):Promise<Array<T>>{

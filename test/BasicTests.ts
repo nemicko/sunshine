@@ -6,6 +6,7 @@ import {EmbeddedModel} from "../src/EmbeddedModel";
 import {Article} from "./models/Article";
 import {Sunshine} from "../src/Sunshine";
 import {Document} from "../src/Document";
+import { LanguageModel } from "./models/LanguageModel";
 
 /**
  * Sunshine V1
@@ -273,6 +274,27 @@ describe('Basic attribute persistence tests', function () {
 
         const articleSaved = await Article.findOne<Article>({ _id: article._id });
         expect(articleSaved.numberArray[0]).to.be.a("number");
+    });
+
+    it("Sorting with Collate", async () => {
+
+        await (new LanguageModel("Alpha")).save();
+        await (new LanguageModel("Beta")).save();
+        await (new LanguageModel("alpha")).save();
+
+        const allSorted = await LanguageModel.find<LanguageModel>({})
+            .sort({"name": 1})
+            .collation({
+                locale: "de",
+                caseLevel: true,
+                caseFirst: "lower"
+            })
+            .toArray();
+
+        expect(allSorted[0].name).equals("alpha");
+        expect(allSorted[1].name).equals("Alpha");
+        expect(allSorted[2].name).equals("Beta");
+
     });
 
 });
