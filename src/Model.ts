@@ -470,4 +470,18 @@ export function Encrypted() {
 }
 
 
+/*
+export function Type() {
+    return function (target: any, propertyKey: string) {
+        if (!target.__dynamicTypes) target.__dynamicTypes = [];
+        target.__dynamicTypes.push(propertyKey);
+    };
+}
+ */
 
+export function Type(parser: (value: any) => any) {
+    return (target: any, key: string) => {
+        if (!target.__dynamicTypes) target.__dynamicTypes = {};
+        target.__dynamicTypes[key] = parser;
+    };
+}

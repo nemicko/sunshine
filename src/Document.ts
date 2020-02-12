@@ -105,8 +105,9 @@ export class Document {
             } else if (typeof update[propertyName] === "string") {
                 if (objectIdRe.test(update[propertyName])) {
                     target[propertyName] = ObjectID.createFromHexString(update[propertyName]);
-                }
-                else {
+                } else if(target.__dynamicTypes && target.__dynamicTypes[propertyName]) {
+                    target[propertyName] = target.__dynamicTypes[propertyName](update[propertyName]);
+                } else {
                     target[propertyName] = update[propertyName];
                 }
             } else if (update[propertyName] instanceof Date){
@@ -162,7 +163,11 @@ export class Document {
                     } else if (document[propertyName] instanceof Binary) {
                         _doc[propertyName] = document[propertyName];
                     } else if (document[propertyName] instanceof Object) {
-                        _doc[propertyName] = this.fetchDocument(document[propertyName]);
+                            if (document.__dynamicTypes && document.__dynamicTypes[propertyName]){
+                                _doc[propertyName] = document[propertyName].toString();
+                            } else {
+                                _doc[propertyName] = this.fetchDocument(document[propertyName]);
+                            }
                     } else { // any other type
                         _doc[propertyName] = document[propertyName];
                     }

@@ -21,11 +21,12 @@
  * OUT OF OR IN CONNECTION WITH T
  */
 
-import {Collection, Encrypted, Model} from "../../src/Model";
+import {Collection, Encrypted, Model, Type} from "../../src/Model";
 import {Binary} from "mongodb";
+import {Bytes32} from "./Bytes32";
 
 @Collection("articles")
-export class Article extends Model{
+export class Article extends Model {
 
     name: string;
     description: string | Object;
@@ -44,5 +45,7 @@ export class Article extends Model{
     @Encrypted()
     encryptedProperty: string;
 
+    @Type((value) => { return new Bytes32(value); })
+    customType: Bytes32;
 }
 
