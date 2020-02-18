@@ -294,7 +294,21 @@ describe('Basic attribute persistence tests', function () {
         expect(allSorted[0].name).equals("alpha");
         expect(allSorted[1].name).equals("Alpha");
         expect(allSorted[2].name).equals("Beta");
+    });
 
+    it("Aggregation with options", async () => {
+
+        const allSorted = await LanguageModel.aggregate<LanguageModel>([], {
+            collation: {
+                locale: "de",
+                caseLevel: true,
+                caseFirst: "lower"
+            }
+        }).sort({ name: 1}).toArray();
+
+        expect(allSorted[0].name).equals("alpha");
+        expect(allSorted[1].name).equals("Alpha");
+        expect(allSorted[2].name).equals("Beta");
     });
 
 });

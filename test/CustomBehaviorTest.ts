@@ -1,6 +1,7 @@
 import {Item, Order} from "./models/Order";
 import {expect} from "chai";
 import {Article} from "./models/Article";
+import {Bytes32} from "./models/Bytes32";
 
 /**
  * Sunshine V1
@@ -67,6 +68,17 @@ describe('Custom behavorial tests', function () {
 
 
         return true;
+    });
+
+
+    it("Test custom Type parsing", async () => {
+
+        const article = new Article();
+        article.customType = new Bytes32("test");
+        await article.save();
+
+        const articleLoaded = await Article.findOne<Article>({ _id: article._id });
+        expect(articleLoaded.customType).to.be.instanceOf(Bytes32);
     });
 
 });

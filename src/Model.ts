@@ -134,10 +134,10 @@ export class Model extends Document{
         return new QueryPointer<T>(queryPointer, this);
     }
 
-    static aggregate<T extends Model>(query):QueryPointer<T>{
+    static aggregate<T extends Model>(query, options: any):QueryPointer<T>{
         let _collection = this._collection;
 
-        let queryPointer = Sunshine.getConnection().collection(_collection).aggregate(query);
+        let queryPointer = Sunshine.getConnection().collection(_collection).aggregate(query, options);
         return new QueryPointer<T>(queryPointer, this);
     }
 
