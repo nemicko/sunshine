@@ -193,7 +193,9 @@ export class Document {
     protected decryptDocument(doc: any) {
         if (this.__encryptedFields) {
             for (const field of this.__encryptedFields) {
-                doc[field] = this.decrypt(doc[field]);
+                // only if not null
+                if (doc[field])
+                    doc[field] = this.decrypt(doc[field]);
             }
         }
     }
