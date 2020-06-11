@@ -56,6 +56,8 @@ describe('Basic attribute persistence tests', function () {
 
         const customer = new Customer();
         customer.firstname = "Michael";
+        customer.title = "Mr";
+        customer.email = "test@test.com";
         await customer.save();
 
         const update = {
@@ -84,12 +86,12 @@ describe('Basic attribute persistence tests', function () {
 
     });
 
-    it("Query (multiple) with select", async () => {
+    it("Query (multiple) with projection", async () => {
 
         // find all fields
         let customer = await Customer.find({}).toArray();
         let keys = Object.keys(customer[0]);
-        expect(keys.length).to.be.equal(4);
+        expect(keys.length).to.be.equal(6);
 
         // find only one field
         customer = await Customer.find({}, { firstname: true }).toArray();

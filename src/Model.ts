@@ -91,9 +91,9 @@ export class Model extends Document{
     }
 
 
-    static findOne<T extends Model>(query, fields?: object):Promise<T> {
+    static findOne<T extends Model>(query, options?: object):Promise<T> {
         return new Promise((resolve, reject) => {
-            Sunshine.getConnection().collection(this._collection).findOne(query, fields, (err, result) => {
+            Sunshine.getConnection().collection(this._collection).findOne(query, options , (err, result) => {
                 if (err) {
                     reject(err);
                     return;

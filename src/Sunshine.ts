@@ -23,10 +23,7 @@ export class Sunshine{
         return Sunshine.properties.encryptionKey;
     }
 
-    static connect(hostname: string, username: string, password: string, database: string, options?: {
-        reconnectTries: number,
-        reconnectInterval: number
-    }){
+    static connect(hostname: string, username: string, password: string, database: string, encryptionKey?: string){
         return new Promise((resolve, reject) => {
             Sunshine.properties = {};
 
@@ -36,10 +33,8 @@ export class Sunshine{
             }
             URI += hostname + "/" + database;
 
-            options = {
-                reconnectTries: (options && options.reconnectTries) ? options.reconnectTries : Sunshine.reconnectTries,
-                reconnectInterval: (options && options.reconnectInterval) ? options.reconnectInterval : Sunshine.reconnectInterval,
-                // @ts-ignore
+            const options = {
+                useUnifiedTopology: true,
                 useNewUrlParser: true
             };
 
@@ -48,6 +43,10 @@ export class Sunshine{
                 Sunshine.mongoClient = mongoClient;
                 Sunshine.db = mongoClient.db(database);
                 Sunshine.isConnected = true;
+
+                if (encryptionKey)
+                    Sunshine.properties.encryptionKey;
+
                 resolve(true);
             });
         });

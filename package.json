@@ -1,6 +1,6 @@
 {
   "name": "sunshine-dao",
-  "version": "2.2.4",
+  "version": "2.3.1",
   "description": "Minimalistic schema free NodeJS / MongoDB DAO made with TypeScript. Meta properties allow hidden and ignored attributes, as well as field encryption",
   "main": "DataProvider.js",
   "scripts": {
@@ -25,7 +25,8 @@
   "homepage": "https://github.com/nemicko/sunshine#readme",
   "dependencies": {
     "crypto-js": "^3.3.0",
-    "mongodb": "^3.5.6"
+    "mongodb": "^3.5.8",
+    "mongodb-memory-server": "^6.6.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
