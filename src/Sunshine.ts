@@ -45,7 +45,7 @@ export class Sunshine{
                 Sunshine.isConnected = true;
 
                 if (encryptionKey)
-                    Sunshine.properties.encryptionKey;
+                    Sunshine.properties.encryptionKey = encryptionKey;
 
                 resolve(true);
             });
