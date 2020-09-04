@@ -8,12 +8,20 @@ import {Sunshine} from "../src/Sunshine";
 import {Document} from "../src/Document";
 import { LanguageModel } from "./models/LanguageModel";
 
+const events = [];
 /**
  * Sunshine V1
  *
  * Copyright (c) Michael Hasler
  */
 describe('Basic attribute persistence tests', function () {
+
+    before(done => {
+        Sunshine.on("insert", event => events.push(event));
+        Sunshine.on("update", event => events.push(event));
+        Sunshine.on("query", event => events.push(event));
+        done();
+    });
 
     it("Creating DocumentModel and extracting Document", async () => {
 
@@ -311,6 +319,11 @@ describe('Basic attribute persistence tests', function () {
         expect(allSorted[0].name).equals("alpha");
         expect(allSorted[1].name).equals("Alpha");
         expect(allSorted[2].name).equals("Beta");
+    });
+
+    it("Collected Events", async () => {
+
+        expect(events.length).equals(38);
     });
 
 });

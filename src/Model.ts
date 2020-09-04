@@ -10,6 +10,7 @@ import {Sunshine} from "./Sunshine";
 import {EmbeddedModel} from "./EmbeddedModel";
 import {ObjectID, Collection} from "mongodb";
 
+
 export class Model extends Document{
 
     // name of collection
@@ -25,18 +26,23 @@ export class Model extends Document{
     save():Promise<boolean>{
         if (this.hasOwnProperty("_id")){
             return new Promise((resolve, reject) => {
-                let _doc = this.fetchDocument(this, false, true, false);
-                let collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
+                const _doc = this.fetchDocument(this, false, true, false);
+                const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
+                const timestamp = new Date();
+
                 if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
+
                 this.encryptDocument(_doc);
                 if (collection.replaceOne) {
                     collection.replaceOne({_id: this._id}, _doc, {upsert: true}, (err, result) => {
                         if (err) reject(err);
+                        Model.emit("update", (this.constructor as any)._collection, timestamp);
                         resolve(true);
                     });
                 } else {
-                    collection.update({_id: this._id}, _doc, {upsert: true}, (err, result) => {
-                        if (err) reject(err);
+                    collection.updateOne({_id: this._id}, _doc, {upsert: true}, (err, result) => {
+                        if (err) reject(err)
+                        Model.emit("update", (this.constructor as any)._collection, timestamp);
                         resolve(true);
                     });
                 }
@@ -47,14 +53,20 @@ export class Model extends Document{
 
     create():Promise<boolean>{
         return new Promise((resolve, reject) => {
-            let _doc = this.fetchDocument(this, false, true, false);
-            let collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
+            const _doc = this.fetchDocument(this, false, true, false);
+            const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
+
+            const timestamp = new Date();
+
             if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
 
             this.encryptDocument(_doc);
             collection.insertOne(_doc, (err, result) => {
                 if (err) reject(err);
                 this._id = result.insertedId;
+
+                Model.emit("insert", (this.constructor as any)._collection, timestamp);
+
                 resolve(true);
             });
         });
@@ -62,8 +74,13 @@ export class Model extends Document{
 
     static findOneDiscrete<T extends Model>(query, type?: { new() : T }, collection?: string):Promise<T> {
         return new Promise((resolve, reject) => {
-            let _collection = (collection)? collection: this._collection;
+            const _collection = (collection)? collection: this._collection;
+            const timestamp = new Date();
+
             Sunshine.getConnection().collection(_collection).findOne(query, (err, result) => {
+
+                Model.emit("query", _collection, timestamp);
+
                 if (err) {
                     reject(err);
                     return;
@@ -92,8 +109,13 @@ export class Model extends Document{
 
 
     static findOne<T extends Model>(query, options?: object):Promise<T> {
+        const timestamp = new Date();
+
         return new Promise((resolve, reject) => {
             Sunshine.getConnection().collection(this._collection).findOne(query, options , (err, result) => {
+
+                Model.emit("query", this._collection, timestamp);
+
                 if (err) {
                     reject(err);
                     return;
@@ -163,7 +185,8 @@ export class Model extends Document{
      * @deprecated Please use updateOne, updateMany
      */
     static update(criteria: any, update: any, options?: any):Promise<any>{
-        let _collection = this._collection;
+        const _collection = this._collection;
+        const timestamp = new Date();
 
         return new Promise((resolve, reject) => {
             Sunshine.getConnection()
@@ -175,6 +198,7 @@ export class Model extends Document{
                         .update(criteria, {
                             $set: { updated : new Date() }
                         }, {}, function (err, result) {
+                            Model.emit("query", _collection, timestamp);
                             resolve(result);
                         });
                 });
@@ -182,7 +206,8 @@ export class Model extends Document{
     }
 
     static updateOne(criteria: any, update: any, options?: any):Promise<any>{
-        let _collection = this._collection;
+        const _collection = this._collection;
+        const timestamp = new Date();
 
         if (update.$set){
             update.$set.updated = new Date();
@@ -197,13 +222,15 @@ export class Model extends Document{
                 .collection(_collection)
                 .updateOne(criteria, update, options, function(err, result) {
                     if (err) reject (err);
+                    Model.emit("query", _collection, timestamp);
                     resolve(result);
                 });
         });
     }
 
     static updateMany(criteria: any, update: any, options?: any):Promise<any>{
-        let _collection = this._collection;
+        const _collection = this._collection;
+        const timestamp = new Date();
 
         if (update.$set){
             update.$set.updated = new Date();
@@ -218,6 +245,7 @@ export class Model extends Document{
                 .collection(_collection)
                 .updateMany(criteria, update, options, function(err, result) {
                     if (err) reject (err);
+                    Model.emit("query", _collection, timestamp);
                     resolve(result);
                 });
         });
@@ -254,11 +282,14 @@ export class Model extends Document{
     }
 
     static remove(query):Promise<boolean>{
+        const timestamp = new Date();
+
         return new Promise((resolve, reject) => {
             let _collection = this._collection;
 
             Sunshine.getConnection().collection(_collection).remove(query, function(err, result){
                 if (err) reject(err);
+                Model.emit("query", _collection, timestamp);
                 resolve(<any>result);
             });
         });
@@ -282,16 +313,28 @@ export class Model extends Document{
         return true;
     }
 
+    /**
+     * Emit update/query events
+     * @private
+     */
+    private static emit(event: string, collection: string, timestamp){
+        Sunshine.event(event, {
+            collection: collection, runtime: (new Date()).getTime() - timestamp.getTime()
+        });
+    }
+
 }
 
 export class QueryPointer<T extends Model>{
 
     private _queryPointer:any;
     private _document:any;
+    private _timestamp: Date;
 
     constructor(queryPointer: any, document: any){
         this._queryPointer = queryPointer;
         this._document = document;
+        this._timestamp = new Date();
     }
 
     public sort(query: object):QueryPointer<T>{
@@ -331,13 +374,17 @@ export class QueryPointer<T extends Model>{
     // --- Close Pipeline -------------------------------------------------------
 
     public async count():Promise<number>{
-        return await this._queryPointer.count();
+        const result = await this._queryPointer.count();
+        this.emit();
+        return result;
     }
 
     public async toArray(type?: { new() : T }):Promise<Array<T>>{
         return await new Promise<Array<T>>((resolve, reject) => {
             let results = this._queryPointer.toArray((err, results) => {
                 if (err) reject(err);
+
+                this.emit();
 
                 let promises = [];
                 let documents = [];
@@ -368,6 +415,16 @@ export class QueryPointer<T extends Model>{
                     resolve(documents);
                 });
             });
+        });
+    }
+
+    /**
+     * Emit update/query events
+     * @private
+     */
+    private emit(){
+        Sunshine.event("query", {
+            collection: this._queryPointer.namespace.collection, runtime: (new Date()).getTime() - this._timestamp.getTime()
         });
     }
 
@@ -437,6 +494,9 @@ export function objectid() {
             configurable: true
         });
     };
+
+
+
 }
 //}
 

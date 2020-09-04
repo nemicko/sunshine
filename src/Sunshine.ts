@@ -1,4 +1,5 @@
 import {MongoClient, Collection, Db} from "mongodb";
+import {EventEmitter} from "events";
 
 /**
  *  Sunshine DAO Connector
@@ -12,8 +13,7 @@ export class Sunshine{
     protected static isConnected:boolean = false;
     private static mongoClient: MongoClient;
 
-    protected static reconnectTries: number = Number.MAX_VALUE;
-    protected static reconnectInterval: number = 1000;
+    private static eventEmitter = new EventEmitter();
 
     static setEncryptionKey(key: string){
         Sunshine.properties.encryptionKey = key;
@@ -55,6 +55,14 @@ export class Sunshine{
     static injectConnection(db: Db){
         this.db = db;
         this.isConnected = true;
+    }
+
+    static on(event: string, callback: (event) => void){
+        this.eventEmitter.on(event, callback);
+    }
+
+    static event(name: string, payload: any){
+        this.eventEmitter.emit(name, payload);
     }
 
     static getConnection(){
