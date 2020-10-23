@@ -23,25 +23,20 @@ export class Sunshine{
         return Sunshine.properties.encryptionKey;
     }
 
-    static connect(hostname: string, username: string, password: string, database: string, encryptionKey?: string){
+    static connectURI(uri: string, encryptionKey?: string) {
         return new Promise((resolve, reject) => {
             Sunshine.properties = {};
-
-            let URI = "mongodb://";
-            if (username && username.length != 0) {
-                URI += username + ":" + password + "@";
-            }
-            URI += hostname + "/" + database;
 
             const options = {
                 useUnifiedTopology: true,
                 useNewUrlParser: true
             };
 
-            MongoClient.connect(URI, options, function(err, mongoClient) {
+            MongoClient.connect(uri, options, function(err, mongoClient) {
                 if (err) reject(err);
                 Sunshine.mongoClient = mongoClient;
-                Sunshine.db = mongoClient.db(database);
+                // @ts-ignore
+                Sunshine.db = mongoClient.db(mongoClient.s.options.database);
                 Sunshine.isConnected = true;
 
                 if (encryptionKey)
@@ -50,6 +45,18 @@ export class Sunshine{
                 resolve(true);
             });
         });
+    }
+
+    static connect(hostname: string, username: string, password: string, database: string, encryptionKey?: string){
+        Sunshine.properties = {};
+
+        let URI = "mongodb://";
+        if (username && username.length != 0) {
+            URI += username + ":" + password + "@";
+        }
+        URI += hostname + "/" + database;
+
+        return this.connectURI(URI, encryptionKey);
     }
 
     static injectConnection(db: Db){
