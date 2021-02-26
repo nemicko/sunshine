@@ -8,7 +8,7 @@
 import {Document} from "./Document";
 import {Sunshine} from "./Sunshine";
 import {EmbeddedModel} from "./EmbeddedModel";
-import {ObjectID, Collection} from "mongodb";
+import {ObjectID, Collection, FindOneOptions} from "mongodb";
 
 
 export class Model extends Document{
@@ -64,9 +64,6 @@ export class Model extends Document{
             collection.insertOne(_doc, (err, result) => {
                 if (err) reject(err);
                 this._id = result.insertedId;
-
-                Model.emit("insert", (this.constructor as any)._collection, timestamp);
-
                 resolve(true);
             });
         });
@@ -152,7 +149,7 @@ export class Model extends Document{
     static find<T extends Model>(query, fields?: any, collection?: string):QueryPointer<T>{
         let _collection = (collection)? collection: this._collection;
 
-        let queryPointer = Sunshine.getConnection().collection(_collection).find(query).project(fields);
+        let queryPointer = Sunshine.getConnection().collection(_collection).find(query, {projection: fields});
         return new QueryPointer<T>(queryPointer, this);
     }
 
@@ -282,14 +279,11 @@ export class Model extends Document{
     }
 
     static remove(query):Promise<boolean>{
-        const timestamp = new Date();
-
         return new Promise((resolve, reject) => {
             let _collection = this._collection;
 
             Sunshine.getConnection().collection(_collection).remove(query, function(err, result){
                 if (err) reject(err);
-                Model.emit("query", _collection, timestamp);
                 resolve(<any>result);
             });
         });

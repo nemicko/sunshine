@@ -8,7 +8,6 @@ import {Sunshine} from "../src/Sunshine";
 import {Document} from "../src/Document";
 import { LanguageModel } from "./models/LanguageModel";
 
-const events = [];
 /**
  * Sunshine V1
  *
@@ -324,6 +323,28 @@ describe('Basic attribute persistence tests', function () {
     it("Collected Events", async () => {
 
         expect(events.length).equals(38);
+    });
+
+    it("Find with projection", async () => {
+        const result = await Customer.find({}, { _id: false }).toArray();
+
+        for (const item of result) {
+            expect(item._id).to.be.equal(undefined);
+        }
+    });
+
+    it("Find with chained projection", async () => {
+        const result = await Customer.find({}).projection({ _id: false }).toArray();
+
+        for (const item of result) {
+            expect(item._id).to.be.equal(undefined);
+        }
+    });
+
+    it("FindOne with projection", async () => {
+        const result = await Customer.findOne({}, { projection: { _id: false } });
+
+        expect(result._id).to.be.equal(undefined);
     });
 
 });
