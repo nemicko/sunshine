@@ -8,7 +8,7 @@
 import {Document} from "./Document";
 import {Sunshine} from "./Sunshine";
 import {EmbeddedModel} from "./EmbeddedModel";
-import {ObjectID, Collection} from "mongodb";
+import {ObjectID, Collection, FindOneOptions} from "mongodb";
 
 export class Model extends Document{
 
@@ -91,7 +91,7 @@ export class Model extends Document{
     }
 
 
-    static findOne<T extends Model>(query, options?: object):Promise<T> {
+    static findOne<T extends Model>(query, options?: FindOneOptions<any>):Promise<T> {
         return new Promise((resolve, reject) => {
             Sunshine.getConnection().collection(this._collection).findOne(query, options , (err, result) => {
                 if (err) {
