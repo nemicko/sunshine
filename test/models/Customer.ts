@@ -36,5 +36,6 @@ export class Customer extends Model{
     title: string;
     firstname: string;
     lastname: string;
+    email: string;
 
 }

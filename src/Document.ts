@@ -1,6 +1,8 @@
 import {Binary, ObjectID} from "mongodb";
 import {Sunshine} from "./Sunshine";
 import * as CryptoJS from "crypto-js";
+import * as Crypto from "crypto";
+import * as crypto from "crypto";
 
 
 const objectIdRe = /^[0-9a-fA-F]{24}$/;
@@ -103,8 +105,9 @@ export class Document {
             } else if (typeof update[propertyName] === "string") {
                 if (objectIdRe.test(update[propertyName])) {
                     target[propertyName] = ObjectID.createFromHexString(update[propertyName]);
-                }
-                else {
+                } else if(target.__dynamicTypes && target.__dynamicTypes[propertyName]) {
+                    target[propertyName] = target.__dynamicTypes[propertyName](update[propertyName]);
+                } else {
                     target[propertyName] = update[propertyName];
                 }
             } else if (update[propertyName] instanceof Date){
@@ -133,7 +136,7 @@ export class Document {
         if (document instanceof ObjectID)
             return document;
 
-        if (typeof(document) === "string" || typeof(document) === 'number')
+        if (typeof(document) === "string" || typeof(document) === "number")
             return document;
 
         for (var propertyName in document) {
@@ -160,7 +163,11 @@ export class Document {
                     } else if (document[propertyName] instanceof Binary) {
                         _doc[propertyName] = document[propertyName];
                     } else if (document[propertyName] instanceof Object) {
-                        _doc[propertyName] = this.fetchDocument(document[propertyName]);
+                            if (document.__dynamicTypes && document.__dynamicTypes[propertyName]){
+                                _doc[propertyName] = document[propertyName].toString();
+                            } else {
+                                _doc[propertyName] = this.fetchDocument(document[propertyName]);
+                            }
                     } else { // any other type
                         _doc[propertyName] = document[propertyName];
                     }
@@ -186,7 +193,9 @@ export class Document {
     protected decryptDocument(doc: any) {
         if (this.__encryptedFields) {
             for (const field of this.__encryptedFields) {
-                doc[field] = this.decrypt(doc[field]);
+                // only if not null
+                if (doc[field])
+                    doc[field] = this.decrypt(doc[field]);
             }
         }
     }

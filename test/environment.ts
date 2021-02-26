@@ -33,6 +33,7 @@ before(done => {
 });
 
 
-after(function () {
+after(function (done) {
     SunshineVirtual.disconnect();
+    done();
 });

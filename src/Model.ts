@@ -52,19 +52,11 @@ export class Model extends Document{
             if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
 
             this.encryptDocument(_doc);
-            if (collection.insertOne) {
-                collection.insertOne(_doc, (err, result) => {
-                    if (err) reject(err);
-                    this._id = result.insertedId;
-                    resolve(true);
-                });
-            } else {
-                collection.insert(_doc, (err, result) => {
-                    if (err) reject(err);
-                    this._id = result.insertedId;
-                    resolve(true);
-                });
-            }
+            collection.insertOne(_doc, (err, result) => {
+                if (err) reject(err);
+                this._id = result.insertedId;
+                resolve(true);
+            });
         });
     }
 
@@ -99,9 +91,9 @@ export class Model extends Document{
     }
 
 
-    static findOne<T extends Model>(query, fields?: object):Promise<T> {
+    static findOne<T extends Model>(query, options?: object):Promise<T> {
         return new Promise((resolve, reject) => {
-            Sunshine.getConnection().collection(this._collection).findOne(query, fields, (err, result) => {
+            Sunshine.getConnection().collection(this._collection).findOne(query, options , (err, result) => {
                 if (err) {
                     reject(err);
                     return;
@@ -138,14 +130,14 @@ export class Model extends Document{
     static find<T extends Model>(query, fields?: any, collection?: string):QueryPointer<T>{
         let _collection = (collection)? collection: this._collection;
 
-        let queryPointer = Sunshine.getConnection().collection(_collection).find(query, fields);
+        let queryPointer = Sunshine.getConnection().collection(_collection).find(query).project(fields);
         return new QueryPointer<T>(queryPointer, this);
     }
 
-    static aggregate<T extends Model>(query):QueryPointer<T>{
+    static aggregate<T extends Model>(query, options?: any):QueryPointer<T>{
         let _collection = this._collection;
 
-        let queryPointer = Sunshine.getConnection().collection(_collection).aggregate(query);
+        let queryPointer = Sunshine.getConnection().collection(_collection).aggregate(query, options);
         return new QueryPointer<T>(queryPointer, this);
     }
 
@@ -166,6 +158,10 @@ export class Model extends Document{
         });
     }
 
+    /**
+     *
+     * @deprecated Please use updateOne, updateMany
+     */
     static update(criteria: any, update: any, options?: any):Promise<any>{
         let _collection = this._collection;
 
@@ -184,6 +180,50 @@ export class Model extends Document{
                 });
         });
     }
+
+    static updateOne(criteria: any, update: any, options?: any):Promise<any>{
+        let _collection = this._collection;
+
+        if (update.$set){
+            update.$set.updated = new Date();
+        } else {
+            update.$set = {
+                updated: new Date()
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            Sunshine.getConnection()
+                .collection(_collection)
+                .updateOne(criteria, update, options, function(err, result) {
+                    if (err) reject (err);
+                    resolve(result);
+                });
+        });
+    }
+
+    static updateMany(criteria: any, update: any, options?: any):Promise<any>{
+        let _collection = this._collection;
+
+        if (update.$set){
+            update.$set.updated = new Date();
+        } else {
+            update.$set = {
+                updated: new Date()
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            Sunshine.getConnection()
+                .collection(_collection)
+                .updateMany(criteria, update, options, function(err, result) {
+                    if (err) reject (err);
+                    resolve(result);
+                });
+        });
+    }
+
+
 
     static collection():Collection{
         return Sunshine.getConnection().collection(this._collection);
@@ -219,7 +259,7 @@ export class Model extends Document{
 
             Sunshine.getConnection().collection(_collection).remove(query, function(err, result){
                 if (err) reject(err);
-                resolve(<any>err);
+                resolve(<any>result);
             });
         });
     }
@@ -229,7 +269,8 @@ export class Model extends Document{
         let list = this.populatable();
         for (let key in this.populatable()) {
             let many = list[key].many;
-            if (!this[list[key].reference]) return true;
+            // If entry does not have reference set (null)
+            if (!this[list[key].reference]) continue;
             if (!list[key].many) {
                 let value = list[key];
                 await this.populate(value.type, this[value.reference], key, value.collection);
@@ -268,13 +309,29 @@ export class QueryPointer<T extends Model>{
         return new QueryPointer<T>(this._queryPointer, this._document);
     }
 
-    public async count():Promise<number>{
-        return await this._queryPointer.count();
+    public collation(properties: {
+        locale?: string,
+        caseLevel?: boolean,
+        caseFirst?: string,
+        strength?: number,
+        numericOrdering?: boolean,
+        alternate?: string,
+        maxVariable?: string,
+        backwards?: boolean
+    }): QueryPointer<T>{
+        this._queryPointer.collation(properties);
+        return new QueryPointer<T>(this._queryPointer, this._document);
     }
 
     public projection(fields: object):QueryPointer<T>{
         this._queryPointer.projection(fields);
         return new QueryPointer<T>(this._queryPointer, this._document);
+    }
+
+    // --- Close Pipeline -------------------------------------------------------
+
+    public async count():Promise<number>{
+        return await this._queryPointer.count();
     }
 
     public async toArray(type?: { new() : T }):Promise<Array<T>>{
@@ -413,4 +470,18 @@ export function Encrypted() {
 }
 
 
+/*
+export function Type() {
+    return function (target: any, propertyKey: string) {
+        if (!target.__dynamicTypes) target.__dynamicTypes = [];
+        target.__dynamicTypes.push(propertyKey);
+    };
+}
+ */
 
+export function Type(parser: (value: any) => any) {
+    return (target: any, key: string) => {
+        if (!target.__dynamicTypes) target.__dynamicTypes = {};
+        target.__dynamicTypes[key] = parser;
+    };
+}

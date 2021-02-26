@@ -21,31 +21,16 @@
  * OUT OF OR IN CONNECTION WITH T
  */
 
-import {Collection, Encrypted, Model, Type} from "../../src/Model";
-import {Binary} from "mongodb";
-import {Bytes32} from "./Bytes32";
+import {Collection, Model} from "../../src/Model";
 
-@Collection("articles")
-export class Article extends Model {
+@Collection("languageModel")
+export class LanguageModel extends Model{
 
     name: string;
-    description: string | Object;
 
-    binaryField: Binary;
+    constructor(name: string) {
+        super();
+        this.name = name;
+    }
 
-    price: number;
-    stock: number;
-
-    numberArray: Array<number>;
-
-    numberObjectArray: [{
-        data: Array<number>
-    }];
-
-    @Encrypted()
-    encryptedProperty: string;
-
-    @Type((value) => { return new Bytes32(value); })
-    customType: Bytes32;
 }
-

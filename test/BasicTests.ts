@@ -5,6 +5,8 @@ import {Customer} from "./models/Customer";
 import {EmbeddedModel} from "../src/EmbeddedModel";
 import {Article} from "./models/Article";
 import {Sunshine} from "../src/Sunshine";
+import {Document} from "../src/Document";
+import { LanguageModel } from "./models/LanguageModel";
 
 /**
  * Sunshine V1
@@ -54,6 +56,8 @@ describe('Basic attribute persistence tests', function () {
 
         const customer = new Customer();
         customer.firstname = "Michael";
+        customer.title = "Mr";
+        customer.email = "test@test.com";
         await customer.save();
 
         const update = {
@@ -82,12 +86,12 @@ describe('Basic attribute persistence tests', function () {
 
     });
 
-    it("Query (multiple) with select", async () => {
+    it("Query (multiple) with projection", async () => {
 
         // find all fields
         let customer = await Customer.find({}).toArray();
         let keys = Object.keys(customer[0]);
-        expect(keys.length).to.be.equal(4);
+        expect(keys.length).to.be.equal(6);
 
         // find only one field
         customer = await Customer.find({}, { firstname: true }).toArray();
@@ -128,7 +132,58 @@ describe('Basic attribute persistence tests', function () {
         // find updated model
         const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
         expect(customerUpdated.firstname).to.be.equal("Markus");
+    });
 
+    it("UpdateOne document", async () => {
+
+        const customer = new Customer();
+        customer.firstname = "Michael";
+        await customer.save();
+
+        // update property
+        await Customer.updateOne({ _id : customer._id }, {
+            $set: {
+                firstname: "Markus"
+            }
+        });
+
+        // find updated model
+        const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
+        expect(customerUpdated.firstname).to.be.equal("Markus");
+    });
+
+    it("UpdateMany document", async () => {
+
+        const customer = new Customer();
+        customer.firstname = "Michael";
+        await customer.save();
+
+        // update property
+        await Customer.updateMany({ _id : customer._id }, {
+            $set: {
+                firstname: "Markus"
+            }
+        });
+
+        // find updated model
+        const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
+        expect(customerUpdated.firstname).to.be.equal("Markus");
+    });
+
+    it("Update document (new updateOne)", async () => {
+
+        const customer = new Customer();
+        customer.firstname = "Michael";
+        await customer.save();
+
+        // update property
+        await Customer.updateOne({ _id : customer._id }, {
+            $set: { firstname: "Hans" }
+        });
+
+        // find updated model
+        const customerUpdated = await Customer.findOne<Customer>({ _id: customer._id });
+        expect(customerUpdated.firstname).to.be.equal("Hans");
     });
 
     it("Create document with auto-type parse objectid", async () => {
@@ -183,6 +238,18 @@ describe('Basic attribute persistence tests', function () {
 
     });
 
+    it("Decrypt from old version", async () => {
+
+        const old = "U2FsdGVkX19TUsTPbRQ4oqde+oqOKMdtCa5HNTj7CrM=";
+
+        const doc = new Document();
+        // @ts-ignore
+        const clearText = doc.decrypt(old);
+
+        expect(clearText).to.be.equal("Hello Rijeka");
+
+    });
+
     it("Binary type is saved and retrieved correctly", async () => {
 
         const article = new Article();
@@ -196,6 +263,54 @@ describe('Basic attribute persistence tests', function () {
         const articleSaved = await Article.findOne<Article>({ _id: article._id });
         expect(articleSaved.binaryField).to.be.instanceOf(Binary);
 
+    });
+
+    it("Array with number types", async () => {
+
+        const article = new Article();
+        article.numberArray = [1, 2, 3, 4, 5, 6];
+        article.numberObjectArray = [{
+            data: [10, 2]
+        }];
+        await article.save();
+
+        const articleSaved = await Article.findOne<Article>({ _id: article._id });
+        expect(articleSaved.numberArray[0]).to.be.a("number");
+    });
+
+    it("Sorting with Collate", async () => {
+
+        await (new LanguageModel("Alpha")).save();
+        await (new LanguageModel("Beta")).save();
+        await (new LanguageModel("alpha")).save();
+
+        const allSorted = await LanguageModel.find<LanguageModel>({})
+            .sort({"name": 1})
+            .collation({
+                locale: "de",
+                caseLevel: true,
+                caseFirst: "lower"
+            })
+            .toArray();
+
+        expect(allSorted[0].name).equals("alpha");
+        expect(allSorted[1].name).equals("Alpha");
+        expect(allSorted[2].name).equals("Beta");
+    });
+
+    it("Aggregation with options", async () => {
+
+        const allSorted = await LanguageModel.aggregate<LanguageModel>([], {
+            collation: {
+                locale: "de",
+                caseLevel: true,
+                caseFirst: "lower"
+            }
+        }).sort({ name: 1}).toArray();
+
+        expect(allSorted[0].name).equals("alpha");
+        expect(allSorted[1].name).equals("Alpha");
+        expect(allSorted[2].name).equals("Beta");
     });
 
 });
