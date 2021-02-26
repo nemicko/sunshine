@@ -130,7 +130,7 @@ export class Model extends Document{
     static find<T extends Model>(query, fields?: any, collection?: string):QueryPointer<T>{
         let _collection = (collection)? collection: this._collection;
 
-        let queryPointer = Sunshine.getConnection().collection(_collection).find(query).project(fields);
+        let queryPointer = Sunshine.getConnection().collection(_collection).find(query, {projection: fields});
         return new QueryPointer<T>(queryPointer, this);
     }
 
@@ -324,7 +324,7 @@ export class QueryPointer<T extends Model>{
     }
 
     public projection(fields: object):QueryPointer<T>{
-        this._queryPointer.projection(fields);
+        this._queryPointer.project(fields);
         return new QueryPointer<T>(this._queryPointer, this._document);
     }
 

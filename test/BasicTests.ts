@@ -313,5 +313,27 @@ describe('Basic attribute persistence tests', function () {
         expect(allSorted[2].name).equals("Beta");
     });
 
+    it("Find with projection", async () => {
+        const result = await Customer.find({}, { _id: false }).toArray();
+
+        for (const item of result) {
+            expect(item._id).to.be.equal(undefined);
+        }
+    });
+
+    it("Find with chained projection", async () => {
+        const result = await Customer.find({}).projection({ _id: false }).toArray();
+
+        for (const item of result) {
+            expect(item._id).to.be.equal(undefined);
+        }
+    });
+
+    it("FindOne with projection", async () => {
+        const result = await Customer.findOne({}, { projection: { _id: false } });
+
+        expect(result._id).to.be.equal(undefined);
+    });
+
 });
 
