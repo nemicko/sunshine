@@ -139,6 +139,10 @@ export class Document {
         if (typeof(document) === "string" || typeof(document) === "number")
             return document;
 
+        if (document instanceof Array) {
+            return document.map(value => value);
+        }
+
         for (var propertyName in document) {
             if (!propertyName.startsWith(filter)) {
                 if (document.__ignoredAttributes && !ignored)

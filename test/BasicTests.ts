@@ -335,5 +335,19 @@ describe('Basic attribute persistence tests', function () {
         expect(result._id).to.be.equal(undefined);
     });
 
+    it("Array of arrays", async () => {
+
+        const article = new Article();
+        article.arrayOfArrays = [
+            [1,2,3],
+            [4,5,6]
+        ];
+        await article.save();
+
+        const articleSaved = await Article.findOne<Article>({ _id: article._id });
+        expect(articleSaved.arrayOfArrays[0]).to.be.a("array");
+        expect(articleSaved.arrayOfArrays[0][0]).to.be.a("number");
+    });
+
 });
 
