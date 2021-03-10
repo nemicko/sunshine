@@ -37,7 +37,7 @@ export class Article extends Model {
     stock: number;
 
     numberArray: Array<number>;
-    arrayOfArrays: Array<Array<number>>;
+    arrayOfArrays: Array<Array<any>>;
 
     numberObjectArray: [{
         data: Array<number>

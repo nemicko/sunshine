@@ -337,16 +337,29 @@ describe('Basic attribute persistence tests', function () {
 
     it("Array of arrays", async () => {
 
-        const article = new Article();
-        article.arrayOfArrays = [
-            [1,2,3],
-            [4,5,6]
+        const arrayOfArrays = [
+            [new ObjectID(), "test" , 3, null, true, "", 0, [1, 2, 3]],
+            [
+                {
+                    id: new ObjectID(),
+                    name: "testName",
+                    num: 1000,
+                    nu: null,
+                    bool: true,
+                    emptyString: "",
+                    arr: [4,5,6]
+                },
+                [100,200,300],
+                null
+            ],
         ];
+
+        const article = new Article();
+        article.arrayOfArrays = arrayOfArrays
         await article.save();
 
         const articleSaved = await Article.findOne<Article>({ _id: article._id });
-        expect(articleSaved.arrayOfArrays[0]).to.be.a("array");
-        expect(articleSaved.arrayOfArrays[0][0]).to.be.a("number");
+        expect(JSON.stringify(arrayOfArrays)).to.be.equal(JSON.stringify(articleSaved.arrayOfArrays));
     });
 
 });

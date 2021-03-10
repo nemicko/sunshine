@@ -136,11 +136,16 @@ export class Document {
         if (document instanceof ObjectID)
             return document;
 
-        if (typeof(document) === "string" || typeof(document) === "number")
+        if (
+            typeof(document) === "string"
+            || typeof(document) === "number" 
+            || typeof(document) === "boolean" 
+            || document === null
+        )
             return document;
 
         if (document instanceof Array) {
-            return document.map(value => value);
+            return document.map(value => this.fetchDocument(value, populated, hidden, ignored));
         }
 
         for (var propertyName in document) {
