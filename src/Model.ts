@@ -10,7 +10,6 @@ import {Sunshine} from "./Sunshine";
 import {EmbeddedModel} from "./EmbeddedModel";
 import {ObjectID, Collection, FindOneOptions, FilterQuery, DeleteWriteOpResultObject} from "mongodb";
 
-
 export class Model extends Document{
 
     // name of collection
@@ -31,7 +30,6 @@ export class Model extends Document{
                 const timestamp = new Date();
 
                 if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
-
                 this.encryptDocument(_doc);
                 if (collection.replaceOne) {
                     collection.replaceOne({_id: this._id}, _doc, {upsert: true}, (err, result) => {
@@ -64,6 +62,7 @@ export class Model extends Document{
             collection.insertOne(_doc, (err, result) => {
                 if (err) reject(err);
                 this._id = result.insertedId;
+                Model.emit("insert", (this.constructor as any)._collection, timestamp);
                 resolve(true);
             });
         });
@@ -402,7 +401,7 @@ export class QueryPointer<T extends Model>{
     }
 
     public projection(fields: object):QueryPointer<T>{
-        this._queryPointer.projection(fields);
+        this._queryPointer.project(fields);
         return new QueryPointer<T>(this._queryPointer, this._document);
     }
 
@@ -529,9 +528,6 @@ export function objectid() {
             configurable: true
         });
     };
-
-
-
 }
 //}
 

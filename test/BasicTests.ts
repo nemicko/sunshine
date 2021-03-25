@@ -8,6 +8,8 @@ import {Sunshine} from "../src/Sunshine";
 import {Document} from "../src/Document";
 import { LanguageModel } from "./models/LanguageModel";
 
+const events = [];
+
 /**
  * Sunshine V1
  *
@@ -321,7 +323,6 @@ describe('Basic attribute persistence tests', function () {
     });
 
     it("Collected Events", async () => {
-
         expect(events.length).equals(38);
     });
 
