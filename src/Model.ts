@@ -8,7 +8,7 @@
 import {Document} from "./Document";
 import {Sunshine} from "./Sunshine";
 import {EmbeddedModel} from "./EmbeddedModel";
-import {ObjectID, Collection, FindOneOptions} from "mongodb";
+import {ObjectID, Collection, FindOneOptions, FilterQuery, DeleteWriteOpResultObject} from "mongodb";
 
 
 export class Model extends Document{
@@ -278,11 +278,52 @@ export class Model extends Document{
         return {};
     }
 
+    /**
+     * @deprecated Use deleteOne or deleteMany
+     * @param query
+     */
     static remove(query):Promise<boolean>{
         return new Promise((resolve, reject) => {
             let _collection = this._collection;
 
             Sunshine.getConnection().collection(_collection).remove(query, function(err, result){
+                if (err) reject(err);
+                resolve(<any>result);
+            });
+        });
+    }
+
+    /**
+     * Deletes only 1 entry from the database
+     * Can be used with object or ObjectId as a parameter
+     * @param query
+     */
+    static deleteOne(query: FilterQuery<any> | ObjectID): Promise<DeleteWriteOpResultObject> {
+        return new Promise((resolve, reject) => {
+            let _query;
+            if (query instanceof ObjectID) {
+                _query = {_id: query}
+            } else {
+                _query = {...query}
+            }
+
+            let _collection = this._collection;
+            Sunshine.getConnection().collection(_collection).deleteOne(_query, function(err, result){
+                if (err) reject(err);
+                resolve(<any>result);
+            });
+        });
+    }
+
+    /**
+     * Deletes every document in the database that matches the query
+     * @param query
+     */
+    static deleteMany(query): Promise<DeleteWriteOpResultObject> {
+        return new Promise((resolve, reject) => {
+            let _collection = this._collection;
+
+            Sunshine.getConnection().collection(_collection).deleteMany(query, function(err, result){
                 if (err) reject(err);
                 resolve(<any>result);
             });

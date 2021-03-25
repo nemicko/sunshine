@@ -374,5 +374,44 @@ describe('Basic attribute persistence tests', function () {
         expect(JSON.stringify(arrayOfArrays)).to.be.equal(JSON.stringify(articleSaved.arrayOfArrays));
     });
 
+    it("Delete One", async () => {
+        const article = new Article();
+        article.name = 'TestArticle';
+        await article.save();
+
+        const article2 = new Article();
+        article2.name = 'TestArticle';
+        await article2.save();
+
+        const deleteArticle = await Article.deleteOne(article._id);
+        const findArticle = await Article.findOne(article._id);
+        expect(deleteArticle.result.n).to.be.equal(1);
+        expect(deleteArticle.result.ok).to.be.equal(1);
+        expect(findArticle).to.be.equal(null);
+
+
+        const deleteArticle2 = await Article.deleteOne({_id: article2._id});
+        const findArticle2 = await Article.findOne(article2._id);
+        expect(deleteArticle2.result.n).to.be.equal(1);
+        expect(deleteArticle2.result.ok).to.be.equal(1);
+        expect(findArticle2).to.be.equal(null);
+    });
+
+    it("Delete many", async () => {
+        const article = new Article();
+        article.name = 'TestArticle';
+        await article.save();
+
+        const article2 = new Article();
+        article2.name = 'TestArticle';
+        await article2.save();
+
+        const deleteArticles = await Article.deleteMany({name: 'TestArticle'});
+        const findArticles = await Article.find({name: 'TestArticle'}).toArray();
+        expect(deleteArticles.result.n).to.be.equal(2);
+        expect(deleteArticles.result.ok).to.be.equal(1);
+        expect(findArticles.length).to.be.equal(0);
+    });
+
 });
 
