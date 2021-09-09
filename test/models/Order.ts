@@ -23,7 +23,7 @@
 
 import {Article} from "./Article";
 
-import {ObjectID} from "mongodb";
+import {ObjectId} from "mongodb";
 import {Customer} from "./Customer";
 
 import {EmbeddedModel} from "../../src/EmbeddedModel";
@@ -45,9 +45,9 @@ export class Item extends EmbeddedModel{
         this.__ignoredAttributes = ['_article', 'articles'];
     }
 
-    _id: ObjectID;
+    _id: ObjectId;
 
-    article_id: ObjectID;
+    article_id: ObjectId;
     _article?: Article;
     articles?: Array<Article>;
 
@@ -74,7 +74,7 @@ export class Order extends Model {
     number: string;
 
     @objectid()
-    customer_id: ObjectID;
+    customer_id: ObjectId;
     _customer?: Customer;
 
     paymentDetails: {

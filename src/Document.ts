@@ -1,9 +1,6 @@
-import {Binary, ObjectID} from "mongodb";
-import {Sunshine} from "./Sunshine";
+import { Binary, ObjectId } from "mongodb";
+import { Sunshine } from "./Sunshine";
 import * as CryptoJS from "crypto-js";
-import * as Crypto from "crypto";
-import * as crypto from "crypto";
-
 
 const objectIdRe = /^[0-9a-fA-F]{24}$/;
 
@@ -74,7 +71,7 @@ export class Document {
      *
      * Encryption is applied if declared.
      * Datatypes are kept.
-     * ObjectID are parsed if possbile.
+     * ObjectId are parsed if possbile.
      *
      * @param target
      * @param update
@@ -88,13 +85,13 @@ export class Document {
                 && !propertyName.startsWith("_id")) {
                 continue;
             }
-            if (target[propertyName] instanceof ObjectID) {
-                if (update[propertyName] instanceof ObjectID) {
+            if (target[propertyName] instanceof ObjectId) {
+                if (update[propertyName] instanceof ObjectId) {
                     target[propertyName] = update[propertyName];
                 } else {
-                    target[propertyName] = ObjectID.createFromHexString(update[propertyName]);
+                    target[propertyName] = ObjectId.createFromHexString(update[propertyName]);
                 }
-            } else if (typeof update === "string"){
+            } else if (typeof update === "string") {
                 target = update;
             } else if (typeof target[propertyName] === "string") {
                 target[propertyName] = update[propertyName];
@@ -104,15 +101,15 @@ export class Document {
                 });
             } else if (typeof update[propertyName] === "string") {
                 if (objectIdRe.test(update[propertyName])) {
-                    target[propertyName] = ObjectID.createFromHexString(update[propertyName]);
-                } else if(target.__dynamicTypes && target.__dynamicTypes[propertyName]) {
+                    target[propertyName] = ObjectId.createFromHexString(update[propertyName]);
+                } else if (target.__dynamicTypes && target.__dynamicTypes[propertyName]) {
                     target[propertyName] = target.__dynamicTypes[propertyName](update[propertyName]);
                 } else {
                     target[propertyName] = update[propertyName];
                 }
-            } else if (update[propertyName] instanceof Date){
+            } else if (update[propertyName] instanceof Date) {
                 target[propertyName] = update[propertyName];
-            } else if (typeof target[propertyName] === "object"){
+            } else if (typeof target[propertyName] === "object") {
                 target[propertyName] = this.upgradeObject(target[propertyName], update[propertyName]);
             } else {
                 target[propertyName] = update[propertyName];
@@ -126,20 +123,21 @@ export class Document {
      * @param document
      * @param {boolean} populated: (true) All ignored attributes are available
      * @param {boolean} hidden: (true) All hidden attributes are available
+     * @param ignored
      * @returns {any}
      */
     public fetchDocument(document, populated: boolean = false, hidden: boolean = false, ignored: boolean = true) {
         const _doc = {};
         const filter = (populated) ? "__" : "_";
 
-        // in case document is ObjectID
-        if (document instanceof ObjectID)
+        // in case document is ObjectId
+        if (document instanceof ObjectId)
             return document;
 
         if (
-            typeof(document) === "string"
-            || typeof(document) === "number" 
-            || typeof(document) === "boolean" 
+            typeof (document) === "string"
+            || typeof (document) === "number"
+            || typeof (document) === "boolean"
             || document === null
         )
             return document;
@@ -148,7 +146,7 @@ export class Document {
             return document.map(value => this.fetchDocument(value, populated, hidden, ignored));
         }
 
-        for (var propertyName in document) {
+        for (const propertyName in document) {
             if (!propertyName.startsWith(filter)) {
                 if (document.__ignoredAttributes && !ignored)
                     if (document.__ignoredAttributes.indexOf(propertyName) != -1) continue;
@@ -156,7 +154,7 @@ export class Document {
                 if (document.__hiddenAttributes && !hidden)
                     if (document.__hiddenAttributes.indexOf(propertyName) != -1) continue;
 
-                if (document[propertyName] instanceof ObjectID) {
+                if (document[propertyName] instanceof ObjectId) {
                     _doc[propertyName] = document[propertyName];
                 } else if (document[propertyName] instanceof Array) {
                     _doc[propertyName] = document[propertyName].map(item => {
@@ -172,11 +170,11 @@ export class Document {
                     } else if (document[propertyName] instanceof Binary) {
                         _doc[propertyName] = document[propertyName];
                     } else if (document[propertyName] instanceof Object) {
-                            if (document.__dynamicTypes && document.__dynamicTypes[propertyName]){
-                                _doc[propertyName] = document[propertyName].toString();
-                            } else {
-                                _doc[propertyName] = this.fetchDocument(document[propertyName]);
-                            }
+                        if (document.__dynamicTypes && document.__dynamicTypes[propertyName]) {
+                            _doc[propertyName] = document[propertyName].toString();
+                        } else {
+                            _doc[propertyName] = this.fetchDocument(document[propertyName]);
+                        }
                     } else { // any other type
                         _doc[propertyName] = document[propertyName];
                     }

@@ -1,6 +1,6 @@
 import {Item, Order} from "./models/Order";
 import {expect} from "chai";
-import {Binary, ObjectID} from "mongodb";
+import {Binary, ObjectId} from "mongodb";
 import {Customer} from "./models/Customer";
 import {EmbeddedModel} from "../src/EmbeddedModel";
 import {Article} from "./models/Article";
@@ -27,7 +27,7 @@ describe('Basic attribute persistence tests', function () {
     it("Creating DocumentModel and extracting Document", async () => {
 
         let order = new Order();
-        order.customer_id = ObjectID.createFromHexString("58f0c0ac235ea70d83e6c672");
+        order.customer_id = ObjectId.createFromHexString("58f0c0ac235ea70d83e6c672");
         order._customer = new Customer();
         order._customer.firstname = "Michael";
 
@@ -42,7 +42,7 @@ describe('Basic attribute persistence tests', function () {
 
         let order = new Order();
         order.created = new Date();
-        order.customer_id = ObjectID.createFromHexString("58f0c0ac235ea70d83e6c672");
+        order.customer_id = ObjectId.createFromHexString("58f0c0ac235ea70d83e6c672");
         order._customer = new Customer();
         order._customer.firstname = "Michael";
         (order as any).testString = "Hello";
@@ -54,7 +54,7 @@ describe('Basic attribute persistence tests', function () {
         let newOrder = await Order.findOne<Order>({ _id : order._id });
 
         expect(newOrder.created).to.be.an("Date");
-        expect(newOrder.customer_id).to.be.instanceof(ObjectID);
+        expect(newOrder.customer_id).to.be.instanceof(ObjectId);
         expect((newOrder as any).testString).to.be.an("string");
         expect((newOrder as any).num).to.be.an("number");
 
@@ -77,7 +77,7 @@ describe('Basic attribute persistence tests', function () {
 
         customer.__elevate(update);
 
-        expect(customer._id).to.be.instanceof(ObjectID);
+        expect(customer._id).to.be.instanceof(ObjectId);
 
         await customer.save();
 
@@ -112,7 +112,7 @@ describe('Basic attribute persistence tests', function () {
     it("Embedded Models are parsed", async() => {
 
         let order = new Order();
-        order.customer_id = ObjectID.createFromHexString("58f0c0ac235ea70d83e6c672");
+        order.customer_id = ObjectId.createFromHexString("58f0c0ac235ea70d83e6c672");
         order._customer = new Customer();
         order._customer.firstname = "Michael";
         order.items.push(new Item({
@@ -203,7 +203,7 @@ describe('Basic attribute persistence tests', function () {
         await order.save();
 
         const orderSaved = await Order.findOne<Order>({ _id: order._id });
-        expect(orderSaved.customer_id).to.be.instanceof(ObjectID);
+        expect(orderSaved.customer_id).to.be.instanceof(ObjectId);
 
     });
 
@@ -211,7 +211,7 @@ describe('Basic attribute persistence tests', function () {
 
         const order = new Order();
         order.attributes = {
-            customer_id: ObjectID.createFromHexString("5a0368ea7bb6ebb9fc10b8e8")
+            customer_id: ObjectId.createFromHexString("5a0368ea7bb6ebb9fc10b8e8")
         };
         await order.save();
 
@@ -223,7 +223,7 @@ describe('Basic attribute persistence tests', function () {
         await order.save();
 
         const orderSaved = await Order.findOne<Order>({ _id: order._id });
-        expect(orderSaved.attributes.customer_id).to.be.instanceof(ObjectID);
+        expect(orderSaved.attributes.customer_id).to.be.instanceof(ObjectId);
 
     });
 
@@ -351,10 +351,10 @@ describe('Basic attribute persistence tests', function () {
     it("Array of arrays", async () => {
 
         const arrayOfArrays = [
-            [new ObjectID(), "test" , 3, null, true, "", 0, [1, 2, 3]],
+            [new ObjectId(), "test" , 3, null, true, "", 0, [1, 2, 3]],
             [
                 {
-                    id: new ObjectID(),
+                    id: new ObjectId(),
                     name: "testName",
                     num: 1000,
                     nu: null,

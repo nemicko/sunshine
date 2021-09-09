@@ -5,25 +5,25 @@
  *  Copyright (c) 2017 Michael Hasler
  */
 
-import {Document} from "./Document";
-import {Sunshine} from "./Sunshine";
-import {EmbeddedModel} from "./EmbeddedModel";
-import {ObjectID, Collection, FindOneOptions, FilterQuery, DeleteWriteOpResultObject} from "mongodb";
+import { Document } from "./Document";
+import { Sunshine } from "./Sunshine";
+import { EmbeddedModel } from "./EmbeddedModel";
+import { ObjectId, Collection, FilterQuery, DeleteWriteOpResultObject } from "mongodb";
 
-export class Model extends Document{
+export class Model extends Document {
 
     // name of collection
-    static _collection:string;
-    _embedded:Array<string>;
+    static _collection: string;
+    _embedded: Array<string>;
 
-    _id: ObjectID;
+    _id: ObjectId;
 
-    constructor(data?: any){
+    constructor(data?: any) {
         super(data);
     }
 
-    save():Promise<boolean>{
-        if (this.hasOwnProperty("_id")){
+    save(): Promise<boolean> {
+        if (this.hasOwnProperty("_id")) {
             return new Promise((resolve, reject) => {
                 const _doc = this.fetchDocument(this, false, true, false);
                 const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
@@ -32,13 +32,13 @@ export class Model extends Document{
                 if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
                 this.encryptDocument(_doc);
                 if (collection.replaceOne) {
-                    collection.replaceOne({_id: this._id}, _doc, {upsert: true}, (err, result) => {
+                    collection.replaceOne({ _id: this._id }, _doc, { upsert: true }, (err, result) => {
                         if (err) reject(err);
                         Model.emit("update", (this.constructor as any)._collection, timestamp);
                         resolve(true);
                     });
                 } else {
-                    collection.updateOne({_id: this._id}, _doc, {upsert: true}, (err, result) => {
+                    collection.updateOne({ _id: this._id }, _doc, { upsert: true }, (err, result) => {
                         if (err) reject(err)
                         Model.emit("update", (this.constructor as any)._collection, timestamp);
                         resolve(true);
@@ -49,7 +49,7 @@ export class Model extends Document{
             return this.create();
     }
 
-    create():Promise<boolean>{
+    create(): Promise<boolean> {
         return new Promise((resolve, reject) => {
             const _doc = this.fetchDocument(this, false, true, false);
             const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
@@ -68,9 +68,9 @@ export class Model extends Document{
         });
     }
 
-    static findOneDiscrete<T extends Model>(query, type?: { new() : T }, collection?: string):Promise<T> {
+    static findOneDiscrete<T extends Model>(query, type?: { new(): T }, collection?: string): Promise<T> {
         return new Promise((resolve, reject) => {
-            const _collection = (collection)? collection: this._collection;
+            const _collection = (collection) ? collection : this._collection;
             const timestamp = new Date();
 
             Sunshine.getConnection().collection(_collection).findOne(query, (err, result) => {
@@ -91,7 +91,7 @@ export class Model extends Document{
                 else
                     t = (new this()).__elevate(result);
 
-                if (t._autoPopulate){
+                if (t._autoPopulate) {
                     t.populateAll().then(success => {
                         resolve(t);
                     });
@@ -104,11 +104,11 @@ export class Model extends Document{
     }
 
 
-    static findOne<T extends Model>(query, options?: object):Promise<T> {
+    static findOne<T extends Model>(query, options?: object): Promise<T> {
         const timestamp = new Date();
 
         return new Promise((resolve, reject) => {
-            Sunshine.getConnection().collection(this._collection).findOne(query, options , (err, result) => {
+            Sunshine.getConnection().collection(this._collection).findOne(query, options, (err, result) => {
 
                 Model.emit("query", this._collection, timestamp);
 
@@ -121,7 +121,7 @@ export class Model extends Document{
                     return;
                 }
                 // parse doc
-                const t = <T> (new this()).__elevate(result);
+                const t = <T>(new this()).__elevate(result);
 
                 // parse embedded
                 if (this.prototype && this.prototype._embedded) {
@@ -134,7 +134,7 @@ export class Model extends Document{
                     }
                 }
 
-                if (t.__autoPopulate){
+                if (t.__autoPopulate) {
                     t.populateAll().then(success => {
                         resolve(t);
                     });
@@ -145,28 +145,28 @@ export class Model extends Document{
         });
     }
 
-    static find<T extends Model>(query, fields?: any, collection?: string):QueryPointer<T>{
-        let _collection = (collection)? collection: this._collection;
+    static find<T extends Model>(query, fields?: any, collection?: string): QueryPointer<T> {
+        let _collection = (collection) ? collection : this._collection;
 
-        let queryPointer = Sunshine.getConnection().collection(_collection).find(query, {projection: fields});
+        let queryPointer = Sunshine.getConnection().collection(_collection).find(query, { projection: fields });
         return new QueryPointer<T>(queryPointer, this);
     }
 
-    static aggregate<T extends Model>(query, options?: any):QueryPointer<T>{
+    static aggregate<T extends Model>(query, options?: any): QueryPointer<T> {
         let _collection = this._collection;
 
         let queryPointer = Sunshine.getConnection().collection(_collection).aggregate(query, options);
         return new QueryPointer<T>(queryPointer, this);
     }
 
-    static group<T extends Model>(query):QueryPointer<T>{
+    static group<T extends Model>(query): QueryPointer<T> {
         let _collection = this._collection;
 
         let queryPointer = (<any>Sunshine.getConnection()).collection(_collection).group(query);
         return new QueryPointer<T>(queryPointer, this);
     }
 
-    static groupT<T extends Model>(query):Promise<Array<T>>{
+    static groupT<T extends Model>(query): Promise<Array<T>> {
         let _collection = this._collection;
 
         return new Promise((resolve, reject) => {
@@ -180,19 +180,19 @@ export class Model extends Document{
      *
      * @deprecated Please use updateOne, updateMany
      */
-    static update(criteria: any, update: any, options?: any):Promise<any>{
+    static update(criteria: any, update: any, options?: any): Promise<any> {
         const _collection = this._collection;
         const timestamp = new Date();
 
         return new Promise((resolve, reject) => {
             Sunshine.getConnection()
                 .collection(_collection)
-                .update(criteria, update, options, function(err, result) {
-                    if (err) reject (err);
+                .update(criteria, update, options, function (err, result) {
+                    if (err) reject(err);
                     Sunshine.getConnection()
                         .collection(_collection)
                         .update(criteria, {
-                            $set: { updated : new Date() }
+                            $set: { updated: new Date() }
                         }, {}, function (err, result) {
                             Model.emit("query", _collection, timestamp);
                             resolve(result);
@@ -201,11 +201,11 @@ export class Model extends Document{
         });
     }
 
-    static updateOne(criteria: any, update: any, options?: any):Promise<any>{
+    static updateOne(criteria: any, update: any, options?: any): Promise<any> {
         const _collection = this._collection;
         const timestamp = new Date();
 
-        if (update.$set){
+        if (update.$set) {
             update.$set.updated = new Date();
         } else {
             update.$set = {
@@ -216,19 +216,19 @@ export class Model extends Document{
         return new Promise((resolve, reject) => {
             Sunshine.getConnection()
                 .collection(_collection)
-                .updateOne(criteria, update, options, function(err, result) {
-                    if (err) reject (err);
+                .updateOne(criteria, update, options, function (err, result) {
+                    if (err) reject(err);
                     Model.emit("query", _collection, timestamp);
                     resolve(result);
                 });
         });
     }
 
-    static updateMany(criteria: any, update: any, options?: any):Promise<any>{
+    static updateMany(criteria: any, update: any, options?: any): Promise<any> {
         const _collection = this._collection;
         const timestamp = new Date();
 
-        if (update.$set){
+        if (update.$set) {
             update.$set.updated = new Date();
         } else {
             update.$set = {
@@ -239,8 +239,8 @@ export class Model extends Document{
         return new Promise((resolve, reject) => {
             Sunshine.getConnection()
                 .collection(_collection)
-                .updateMany(criteria, update, options, function(err, result) {
-                    if (err) reject (err);
+                .updateMany(criteria, update, options, function (err, result) {
+                    if (err) reject(err);
                     Model.emit("query", _collection, timestamp);
                     resolve(result);
                 });
@@ -248,12 +248,11 @@ export class Model extends Document{
     }
 
 
-
-    static collection():Collection{
+    static collection(): Collection {
         return Sunshine.getConnection().collection(this._collection);
     }
 
-    async populate<T extends Model>(type: { new() : T }, _id: ObjectID,  name: string, collection: string): Promise<T>{
+    async populate<T extends Model>(type: { new(): T }, _id: ObjectId, name: string, collection: string): Promise<T> {
         let _name = "_" + name;
         if (this[_name]) {
             return this[_name]
@@ -263,17 +262,17 @@ export class Model extends Document{
         return this[_name];
     }
 
-    async populateMany<T extends Model>(type: { new() : T }, _ids: Array<ObjectID>,  name: string, collection: string): Promise<Array<T>>{
+    async populateMany<T extends Model>(type: { new(): T }, _ids: Array<ObjectId>, name: string, collection: string): Promise<Array<T>> {
         let _name = "_" + name;
         if (this[_name]) {
             return this[_name]
         } else {
-            this[_name] = await Model.find<T>({ _id : { $in: _ids }}, {},  collection).toArray(type);
+            this[_name] = await Model.find<T>({ _id: { $in: _ids } }, {}, collection).toArray(type);
         }
         return this[_name];
     }
 
-    protected populatable(){
+    protected populatable() {
         return {};
     }
 
@@ -281,11 +280,11 @@ export class Model extends Document{
      * @deprecated Use deleteOne or deleteMany
      * @param query
      */
-    static remove(query):Promise<boolean>{
+    static remove(query): Promise<boolean> {
         return new Promise((resolve, reject) => {
             let _collection = this._collection;
 
-            Sunshine.getConnection().collection(_collection).remove(query, function(err, result){
+            Sunshine.getConnection().collection(_collection).remove(query, function (err, result) {
                 if (err) reject(err);
                 resolve(<any>result);
             });
@@ -297,17 +296,17 @@ export class Model extends Document{
      * Can be used with object or ObjectId as a parameter
      * @param query
      */
-    static deleteOne(query: FilterQuery<any> | ObjectID): Promise<DeleteWriteOpResultObject> {
+    static deleteOne(query: FilterQuery<any> | ObjectId): Promise<DeleteWriteOpResultObject> {
         return new Promise((resolve, reject) => {
             let _query;
-            if (query instanceof ObjectID) {
-                _query = {_id: query}
+            if (query instanceof ObjectId) {
+                _query = { _id: query }
             } else {
-                _query = {...query}
+                _query = { ...query }
             }
 
             let _collection = this._collection;
-            Sunshine.getConnection().collection(_collection).deleteOne(_query, function(err, result){
+            Sunshine.getConnection().collection(_collection).deleteOne(_query, function (err, result) {
                 if (err) reject(err);
                 resolve(<any>result);
             });
@@ -322,7 +321,7 @@ export class Model extends Document{
         return new Promise((resolve, reject) => {
             let _collection = this._collection;
 
-            Sunshine.getConnection().collection(_collection).deleteMany(query, function(err, result){
+            Sunshine.getConnection().collection(_collection).deleteMany(query, function (err, result) {
                 if (err) reject(err);
                 resolve(<any>result);
             });
@@ -330,7 +329,7 @@ export class Model extends Document{
     }
 
     // TODO: Remove double assing of attriubte
-    public async populateAll():Promise<boolean>{
+    public async populateAll(): Promise<boolean> {
         let list = this.populatable();
         for (let key in this.populatable()) {
             let many = list[key].many;
@@ -351,7 +350,7 @@ export class Model extends Document{
      * Emit update/query events
      * @private
      */
-    private static emit(event: string, collection: string, timestamp){
+    private static emit(event: string, collection: string, timestamp) {
         Sunshine.event(event, {
             collection: collection, runtime: (new Date()).getTime() - timestamp.getTime()
         });
@@ -359,29 +358,29 @@ export class Model extends Document{
 
 }
 
-export class QueryPointer<T extends Model>{
+export class QueryPointer<T extends Model> {
 
-    private _queryPointer:any;
-    private _document:any;
+    private _queryPointer: any;
+    private _document: any;
     private _timestamp: Date;
 
-    constructor(queryPointer: any, document: any){
+    constructor(queryPointer: any, document: any) {
         this._queryPointer = queryPointer;
         this._document = document;
         this._timestamp = new Date();
     }
 
-    public sort(query: object):QueryPointer<T>{
+    public sort(query: object): QueryPointer<T> {
         this._queryPointer.sort(query);
         return new QueryPointer<T>(this._queryPointer, this._document);
     }
 
-    public limit(limit: number):QueryPointer<T>{
+    public limit(limit: number): QueryPointer<T> {
         this._queryPointer.limit(limit);
         return new QueryPointer<T>(this._queryPointer, this._document);
     }
 
-    public skip(limit: number):QueryPointer<T>{
+    public skip(limit: number): QueryPointer<T> {
         this._queryPointer.skip(limit);
         return new QueryPointer<T>(this._queryPointer, this._document);
     }
@@ -395,25 +394,25 @@ export class QueryPointer<T extends Model>{
         alternate?: string,
         maxVariable?: string,
         backwards?: boolean
-    }): QueryPointer<T>{
+    }): QueryPointer<T> {
         this._queryPointer.collation(properties);
         return new QueryPointer<T>(this._queryPointer, this._document);
     }
 
-    public projection(fields: object):QueryPointer<T>{
+    public projection(fields: object): QueryPointer<T> {
         this._queryPointer.project(fields);
         return new QueryPointer<T>(this._queryPointer, this._document);
     }
 
     // --- Close Pipeline -------------------------------------------------------
 
-    public async count():Promise<number>{
+    public async count(): Promise<number> {
         const result = await this._queryPointer.count();
         this.emit();
         return result;
     }
 
-    public async toArray(type?: { new() : T }):Promise<Array<T>>{
+    public async toArray(type?: { new(): T }): Promise<Array<T>> {
         return await new Promise<Array<T>>((resolve, reject) => {
             let results = this._queryPointer.toArray((err, results) => {
                 if (err) reject(err);
@@ -456,9 +455,10 @@ export class QueryPointer<T extends Model>{
      * Emit update/query events
      * @private
      */
-    private emit(){
+    private emit() {
         Sunshine.event("query", {
-            collection: this._queryPointer.namespace.collection, runtime: (new Date()).getTime() - this._timestamp.getTime()
+            collection: this._queryPointer.namespace.collection,
+            runtime: (new Date()).getTime() - this._timestamp.getTime()
         });
     }
 
@@ -482,14 +482,14 @@ export function Collection(name: string) {
  */
 export function objectid() {
     return (target: any, key: string) => {
-        let pKey = `_${key}`;
+        let pKey = `_${ key }`;
 
         // called at runtime to access (this) as instance of class
         let init = function (isGet: boolean) {
             return function (newVal?) {
 
                 // Hidden property
-                Object.defineProperty(this, pKey, {value: 0, enumerable: false, configurable: true, writable: true});
+                Object.defineProperty(this, pKey, { value: 0, enumerable: false, configurable: true, writable: true });
 
                 // Public property
                 Object.defineProperty(this, key, {
@@ -497,12 +497,12 @@ export function objectid() {
                         return this[pKey];
                     },
                     set: (val) => {
-                        if (val instanceof ObjectID){
+                        if (val instanceof ObjectId) {
                             this[pKey] = val;
                         } else {
                             try {
-                                this[pKey] = ObjectID.createFromHexString(val);
-                            } catch (exception){
+                                this[pKey] = ObjectId.createFromHexString(val);
+                            } catch (exception) {
                                 this[pKey] = null;
                             }
                         }
@@ -529,6 +529,7 @@ export function objectid() {
         });
     };
 }
+
 //}
 
 /**

@@ -1,25 +1,25 @@
-import {MongoClient, Collection, Db} from "mongodb";
-import {EventEmitter} from "events";
+import { MongoClient, Db } from "mongodb";
+import { EventEmitter } from "events";
 
 /**
  *  Sunshine DAO Connector
  *
  *  @ Michael Hasler
  */
-export class Sunshine{
+export class Sunshine {
 
-    protected static db:Db;
+    protected static db: Db;
     protected static properties;
-    protected static isConnected:boolean = false;
+    protected static isConnected: boolean = false;
     private static mongoClient: MongoClient;
 
     private static eventEmitter = new EventEmitter();
 
-    static setEncryptionKey(key: string){
+    static setEncryptionKey(key: string) {
         Sunshine.properties.encryptionKey = key;
     }
 
-    static getEncryptionKey(){
+    static getEncryptionKey() {
         return Sunshine.properties.encryptionKey;
     }
 
@@ -32,7 +32,7 @@ export class Sunshine{
                 useNewUrlParser: true
             };
 
-            MongoClient.connect(uri, options, function(err, mongoClient) {
+            MongoClient.connect(uri, options, function (err, mongoClient) {
                 if (err) reject(err);
                 Sunshine.mongoClient = mongoClient;
                 // @ts-ignore
@@ -47,7 +47,7 @@ export class Sunshine{
         });
     }
 
-    static connect(hostname: string, username: string, password: string, database: string, encryptionKey?: string){
+    static connect(hostname: string, username: string, password: string, database: string, encryptionKey?: string) {
         Sunshine.properties = {};
 
         let URI = "mongodb://";
@@ -59,27 +59,27 @@ export class Sunshine{
         return this.connectURI(URI, encryptionKey);
     }
 
-    static injectConnection(db: Db){
+    static injectConnection(db: Db) {
         this.db = db;
         this.isConnected = true;
     }
 
-    static on(event: string, callback: (event) => void){
+    static on(event: string, callback: (event) => void) {
         this.eventEmitter.on(event, callback);
     }
 
-    static event(name: string, payload: any){
+    static event(name: string, payload: any) {
         this.eventEmitter.emit(name, payload);
     }
 
-    static getConnection(){
+    static getConnection() {
         if (!Sunshine.isConnected) {
             throw new Error("No connection available :(");
         }
         return Sunshine.db;
     }
 
-    static async disconnect():Promise<boolean>{
+    static async disconnect(): Promise<boolean> {
         await this.mongoClient.close();
         return true;
     }

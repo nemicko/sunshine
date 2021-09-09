@@ -5,16 +5,16 @@
  *  Copyright (c) 2017 Michael Hasler
  */
 
-import {ObjectID} from "mongodb";
-import {Document} from "./Document";
+import { ObjectId } from "mongodb";
+import { Document } from "./Document";
 
-export class EmbeddedModel extends Document{
+export class EmbeddedModel extends Document {
 
-    _id: ObjectID;
+    _id: ObjectId;
 
-    constructor(data?: any){
+    constructor(data?: any) {
         super();
-        this._id = new ObjectID();
+        this._id = new ObjectId();
         if (data) this.__elevate(data);
     }
 

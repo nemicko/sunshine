@@ -1,4 +1,4 @@
-import {Sunshine} from "./Sunshine";
+import { Sunshine } from "./Sunshine";
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 /**
@@ -22,25 +22,21 @@ export class SunshineVirtual extends Sunshine {
             const mongoServerInstance = new MongoMemoryServer({
                 instance: {
                     port: port,
-                    dbName: dbname ? dbname : "virtual"
+                    dbName: dbname ? dbname : "virtual",
+                    storageEngine: "wiredTiger"
                 }
             });
 
-            mongoServerInstance.getConnectionString().then(async (connectionString) => {
-                const port = await mongoServerInstance.getPort();
-                const dbPath = await mongoServerInstance.getDbPath();
-                const dbName = await mongoServerInstance.getDbName();
-
-
-                this.connect("localhost" + ":" + port,  "", "", dbName).then(function(success){
-                    resolve(success);
+            mongoServerInstance.start().then(() => {
+                this.connectURI(mongoServerInstance.getUri()).then(res => {
+                    resolve(res)
+                }).catch(err => {
+                    reject(err);
                 });
-
+            }).catch(error => {
+                reject(error);
             });
-
         });
-
-
     }
 
 }
