@@ -33,7 +33,11 @@ export class Sunshine {
             };
 
             MongoClient.connect(uri, options, function (err, mongoClient) {
-                if (err) reject(err);
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
                 Sunshine.mongoClient = mongoClient;
                 // @ts-ignore
                 Sunshine.db = mongoClient.db(mongoClient.s.options.database);
