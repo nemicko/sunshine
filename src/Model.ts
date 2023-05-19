@@ -8,8 +8,18 @@
 import { Document } from "./Document";
 import { Sunshine } from "./Sunshine";
 import { EmbeddedModel } from "./EmbeddedModel";
-import { ObjectId, Collection, FilterQuery, DeleteWriteOpResultObject } from "mongodb";
+import {
+    ObjectId,
+    Collection,
+    FindOptions,
+    UpdateFilter,
+    UpdateResult,
+    UpdateOptions,
+    DistinctOptions,
+    AggregateOptions
+} from "mongodb"
 
+type Query = { [key: string]: any }
 export class Model extends Document {
 
     // name of collection
@@ -22,253 +32,202 @@ export class Model extends Document {
         super(data);
     }
 
-    save(): Promise<boolean> {
+    async save(): Promise<boolean> {
         if (this.hasOwnProperty("_id")) {
-            return new Promise((resolve, reject) => {
-                const _doc = this.fetchDocument(this, false, true, false);
-                const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
-                const timestamp = new Date();
-
-                if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
-                this.encryptDocument(_doc);
-                if (collection.replaceOne) {
-                    collection.replaceOne({ _id: this._id }, _doc, { upsert: true }, (err, result) => {
-                        if (err) reject(err);
-                        Model.emit("update", (this.constructor as any)._collection, timestamp);
-                        resolve(true);
-                    });
-                } else {
-                    collection.updateOne({ _id: this._id }, _doc, { upsert: true }, (err, result) => {
-                        if (err) reject(err)
-                        Model.emit("update", (this.constructor as any)._collection, timestamp);
-                        resolve(true);
-                    });
-                }
-            });
-        } else
-            return this.create();
-    }
-
-    create(): Promise<boolean> {
-        return new Promise((resolve, reject) => {
             const _doc = this.fetchDocument(this, false, true, false);
             const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
-
             const timestamp = new Date();
 
             if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
-
             this.encryptDocument(_doc);
-            collection.insertOne(_doc, (err, result) => {
-                if (err) reject(err);
-                this._id = result.insertedId;
-                Model.emit("insert", (this.constructor as any)._collection, timestamp);
-                resolve(true);
-            });
-        });
+            if (collection.replaceOne) {
+                try {
+                    await collection.replaceOne({ _id: this._id }, _doc, { upsert: true });
+                    Model.emit("update", (this.constructor as any)._collection, timestamp);
+                    return true;
+                } catch (error) {
+                    throw error;
+                }
+            }
+
+            try {
+                await collection.updateOne({ _id: this._id }, _doc, { upsert: true });
+                Model.emit("update", (this.constructor as any)._collection, timestamp);
+            } catch (error) {
+                throw error;
+            }
+        }
+        else
+            return this.create();
     }
 
-    static findOneDiscrete<T extends Model>(query, type?: { new(): T }, collection?: string): Promise<T> {
-        return new Promise((resolve, reject) => {
-            const _collection = (collection) ? collection : this._collection;
-            const timestamp = new Date();
+    async create(): Promise<boolean> {
+        const _doc = this.fetchDocument(this, false, true, false);
+        const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
 
-            Sunshine.getConnection().collection(_collection).findOne(query, (err, result) => {
-
-                Model.emit("query", _collection, timestamp);
-
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                if (!result || result === null) {
-                    resolve(null);
-                    return;
-                }
-                let t = null;
-                if (type)
-                    t = (new type()).__elevate(result);
-                else
-                    t = (new this()).__elevate(result);
-
-                if (t._autoPopulate) {
-                    t.populateAll().then(success => {
-                        resolve(t);
-                    });
-                } else {
-                    resolve(t);
-                }
-
-            });
-        });
-    }
-
-
-    static findOne<T extends Model>(query, options?: object): Promise<T> {
         const timestamp = new Date();
 
-        return new Promise((resolve, reject) => {
-            Sunshine.getConnection().collection(this._collection).findOne(query, options, (err, result) => {
+        if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
 
-                Model.emit("query", this._collection, timestamp);
+        this.encryptDocument(_doc);
+        try {
+          const result = await collection.insertOne(_doc);
+          this._id = result.insertedId;
+          Model.emit("insert", (this.constructor as any)._collection, timestamp);
+          return true
+        } catch (error) {
+          throw error
+        }
+    }
 
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                if (!result || result === null) {
-                    resolve(null);
-                    return;
-                }
-                // parse doc
-                const t = <T>(new this()).__elevate(result);
+    static async findOneDiscrete<T extends Model>(query, type?: { new(): T }, collection?: string): Promise<T> {
+        const _collection = (collection) ? collection : this._collection;
+        const timestamp = new Date();
 
-                // parse embedded
-                if (this.prototype && this.prototype._embedded) {
-                    for (const em of this.prototype._embedded) {
-                        if (t[em] instanceof Array) {
-                            t[em] = t[em].map(element => {
-                                return new EmbeddedModel(element);
-                            });
-                        }
+        try {
+          const result = await Sunshine.getConnection().collection(_collection).findOne(query);
+          Model.emit("query", _collection, timestamp);
+          if (!result)
+            return null;
+
+          let t: T;
+          if (type)
+            t = (new type()).__elevate(result);
+          else
+            t = <T>(new this()).__elevate(result);
+
+          if (t.__autoPopulate) {
+            await t.populateAll();
+          }
+
+          return t;
+        } catch (error) {
+          throw error
+        }
+    }
+
+
+    static async findOne<T extends Model>(query, options?: FindOptions): Promise<T> {
+        const timestamp = new Date();
+
+        try {
+            const result = await Sunshine.getConnection().collection(this._collection).findOne(query, options);
+            Model.emit("query", this._collection, timestamp);
+            if (!result)
+                return null;
+
+            // parse doc
+            const t = <T>(new this()).__elevate(result);
+
+            // parse embedded
+            if (this.prototype?._embedded) {
+                for (const em of this.prototype._embedded) {
+                    if (t[em] instanceof Array) {
+                        t[em] = t[em].map(element => {
+                            return new EmbeddedModel(element);
+                        });
                     }
                 }
-
-                if (t.__autoPopulate) {
-                    t.populateAll().then(success => {
-                        resolve(t);
-                    });
-                } else {
-                    resolve(t);
-                }
-            });
-        });
-    }
-
-    static find<T extends Model>(query, fields?: any, collection?: string): QueryPointer<T> {
-        let _collection = (collection) ? collection : this._collection;
-
-        let queryPointer = Sunshine.getConnection().collection(_collection).find(query, { projection: fields });
-        return new QueryPointer<T>(queryPointer, this);
-    }
-
-    static aggregate<T extends Model>(query, options?: any): QueryPointer<T> {
-        let _collection = this._collection;
-
-        let queryPointer = Sunshine.getConnection().collection(_collection).aggregate(query, options);
-        return new QueryPointer<T>(queryPointer, this);
-    }
-
-    static group<T extends Model>(query): QueryPointer<T> {
-        let _collection = this._collection;
-
-        let queryPointer = (<any>Sunshine.getConnection()).collection(_collection).group(query);
-        return new QueryPointer<T>(queryPointer, this);
-    }
-
-    static groupT<T extends Model>(query): Promise<Array<T>> {
-        let _collection = this._collection;
-
-        return new Promise((resolve, reject) => {
-            let queryPointer = (<any>Sunshine.getConnection()).collection(_collection).group(query, {}, {}, results => {
-                resolve(results);
-            });
-        });
-    }
-
-    /**
-     *
-     * @deprecated Please use updateOne, updateMany
-     */
-    static update(criteria: any, update: any, options?: any): Promise<any> {
-        const _collection = this._collection;
-        const timestamp = new Date();
-
-        return new Promise((resolve, reject) => {
-            Sunshine.getConnection()
-                .collection(_collection)
-                .update(criteria, update, options, function (err, result) {
-                    if (err) reject(err);
-                    Sunshine.getConnection()
-                        .collection(_collection)
-                        .update(criteria, {
-                            $set: { updated: new Date() }
-                        }, {}, function (err, result) {
-                            Model.emit("query", _collection, timestamp);
-                            resolve(result);
-                        });
-                });
-        });
-    }
-
-    static updateOne(criteria: any, update: any, options?: any): Promise<any> {
-        const _collection = this._collection;
-        const timestamp = new Date();
-
-        if (update.$set) {
-            update.$set.updated = new Date();
-        } else {
-            update.$set = {
-                updated: new Date()
             }
+
+            if (t.__autoPopulate) {
+                await t.populateAll()
+            }
+            return t;
+        } catch (error) {
+            throw error;
         }
 
-        return new Promise((resolve, reject) => {
-            Sunshine.getConnection()
-                .collection(_collection)
-                .updateOne(criteria, update, options, function (err, result) {
-                    if (err) reject(err);
-                    Model.emit("query", _collection, timestamp);
-                    resolve(result);
-                });
-        });
     }
 
-    static updateMany(criteria: any, update: any, options?: any): Promise<any> {
+    static find<T extends Model>(query, options?: FindOptions, collection?: string): QueryPointer<T> {
+        const _collection = (collection) ? collection : this._collection;
+
+        const queryPointer = Sunshine.getConnection().collection(_collection).find(query, options);
+        return new QueryPointer<T>(queryPointer, this);
+    }
+
+    static aggregate<T extends Model>(query: Query[], options?: AggregateOptions): QueryPointer<T> {
+        const _collection = this._collection;
+
+        const queryPointer = Sunshine.getConnection().collection(_collection).aggregate(query, options);
+        return new QueryPointer<T>(queryPointer, this);
+    }
+
+    static async distinct<T extends Model>(key: string, query: Query[], options?: DistinctOptions): Promise<T[]> {
         const _collection = this._collection;
         const timestamp = new Date();
 
-        if (update.$set) {
-            update.$set.updated = new Date();
-        } else {
-            update.$set = {
-                updated: new Date()
-            }
+        try {
+            const result = await Sunshine.getConnection().collection(_collection).distinct(key, query, options);
+            Model.emit("query", _collection, timestamp);
+
+            return result;
+        } catch (error) {
+            throw error;
         }
 
-        return new Promise((resolve, reject) => {
-            Sunshine.getConnection()
-                .collection(_collection)
-                .updateMany(criteria, update, options, function (err, result) {
-                    if (err) reject(err);
-                    Model.emit("query", _collection, timestamp);
-                    resolve(result);
-                });
-        });
     }
 
+    static async updateOne<T extends Document>(criteria: Query, update: UpdateFilter<any>, options?: UpdateOptions): Promise<UpdateResult<T>> {
+        const _collection = this._collection;
+        const timestamp = new Date();
+
+        update.$set = {
+            updated: new Date(),
+            ...update.$set
+        }
+
+        try {
+            const result = await Sunshine.getConnection().collection(_collection).updateOne(criteria, update, options);
+            Model.emit("query", _collection, timestamp);
+            return result
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async updateMany(criteria: Query, update: UpdateFilter<any>, options?: UpdateOptions): Promise<UpdateResult> {
+        const _collection = this._collection;
+        const timestamp = new Date();
+
+        update.$set = {
+            updated: new Date(),
+            ...update.$set
+        }
+
+        try {
+            const result = await Sunshine.getConnection().collection(_collection).updateMany(criteria, update, options);
+            Model.emit("query", _collection, timestamp);
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    }
 
     static collection(): Collection {
         return Sunshine.getConnection().collection(this._collection);
     }
 
     async populate<T extends Model>(type: { new(): T }, _id: ObjectId, name: string, collection: string): Promise<T> {
-        let _name = "_" + name;
+        const _name = "_" + name;
         if (this[_name]) {
             return this[_name]
-        } else {
-            this[_name] = await Model.findOneDiscrete<T>({ _id: _id }, type, collection);
         }
+
+        this[_name] = await Model.findOneDiscrete<T>({ _id: _id }, type, collection);
+
         return this[_name];
     }
 
     async populateMany<T extends Model>(type: { new(): T }, _ids: Array<ObjectId>, name: string, collection: string): Promise<Array<T>> {
-        let _name = "_" + name;
+        const _name = "_" + name;
         if (this[_name]) {
             return this[_name]
-        } else {
-            this[_name] = await Model.find<T>({ _id: { $in: _ids } }, {}, collection).toArray(type);
         }
+
+        this[_name] = await Model.find<T>({ _id: { $in: _ids } }, {}, collection).toArray(type);
+
         return this[_name];
     }
 
@@ -471,11 +430,11 @@ export class QueryPointer<T extends Model> {
  * @returns {(target) => any}
  * @constructor
  */
-export function Collection(name: string) {
-    return (target) => {
-        target._collection = name;
-    }
-}
+// export function Collection(name: string) {
+//     return (target) => {
+//         target._collection = name;
+//     }
+// }
 
 /**
  * Decorator for objectId type

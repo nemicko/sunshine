@@ -2,12 +2,12 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2017",
+    "outDir": "dist",
     "moduleResolution": "node",
     "sourceMap": true,
     "noImplicitAny": false,
     "suppressImplicitAnyIndexErrors": true,
     "declaration": false,
-    "watch": true,
     "experimentalDecorators": true
   },
   "exclude": [
