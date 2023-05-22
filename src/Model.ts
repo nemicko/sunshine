@@ -5,18 +5,19 @@
  *  Copyright (c) 2017 Michael Hasler
  */
 
-import { Document } from "./Document";
-import { Sunshine } from "./Sunshine";
-import { EmbeddedModel } from "./EmbeddedModel";
+import { Document } from "./Document"
+import { Sunshine } from "./Sunshine"
+import { EmbeddedModel } from "./EmbeddedModel"
 import {
     ObjectId,
-    Collection,
     FindOptions,
-    UpdateFilter,
     UpdateResult,
+    DeleteResult,
+    UpdateFilter,
     UpdateOptions,
     DistinctOptions,
-    AggregateOptions
+    AggregateOptions,
+    Collection as DatabaseCollection
 } from "mongodb"
 
 type Query = { [key: string]: any }
@@ -205,7 +206,7 @@ export class Model extends Document {
         }
     }
 
-    static collection(): Collection {
+    static collection(): DatabaseCollection {
         return Sunshine.getConnection().collection(this._collection);
     }
 
@@ -236,73 +237,43 @@ export class Model extends Document {
     }
 
     /**
-     * @deprecated Use deleteOne or deleteMany
-     * @param query
-     */
-    static remove(query): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            let _collection = this._collection;
-
-            Sunshine.getConnection().collection(_collection).remove(query, function (err, result) {
-                if (err) reject(err);
-                resolve(<any>result);
-            });
-        });
-    }
-
-    /**
      * Deletes only 1 entry from the database
      * Can be used with object or ObjectId as a parameter
      * @param query
      */
-    static deleteOne(query: FilterQuery<any> | ObjectId): Promise<DeleteWriteOpResultObject> {
-        return new Promise((resolve, reject) => {
-            let _query;
-            if (query instanceof ObjectId) {
-                _query = { _id: query }
-            } else {
-                _query = { ...query }
-            }
+    static async deleteOne(query: Query | ObjectId): Promise<DeleteResult> {
+        const _query = query instanceof ObjectId
+          ? { _id: query }
+          : { ...query };
 
-            let _collection = this._collection;
-            Sunshine.getConnection().collection(_collection).deleteOne(_query, function (err, result) {
-                if (err) reject(err);
-                resolve(<any>result);
-            });
-        });
+        const _collection = this._collection;
+        return Sunshine.getConnection().collection(_collection).deleteOne(_query);
     }
 
     /**
      * Deletes every document in the database that matches the query
      * @param query
      */
-    static deleteMany(query): Promise<DeleteWriteOpResultObject> {
-        return new Promise((resolve, reject) => {
-            let _collection = this._collection;
+    static async deleteMany(query: Query): Promise<DeleteResult> {
+        const _collection = this._collection;
 
-            Sunshine.getConnection().collection(_collection).deleteMany(query, function (err, result) {
-                if (err) reject(err);
-                resolve(<any>result);
-            });
-        });
+        return Sunshine.getConnection().collection(_collection).deleteMany(query);
     }
 
     // TODO: Remove double assing of attriubte
-    public async populateAll(): Promise<boolean> {
-        let list = this.populatable();
+    public async populateAll(): Promise<void> {
+        const list = this.populatable();
         for (let key in this.populatable()) {
-            let many = list[key].many;
             // If entry does not have reference set (null)
             if (!this[list[key].reference]) continue;
             if (!list[key].many) {
-                let value = list[key];
+                const value = list[key];
                 await this.populate(value.type, this[value.reference], key, value.collection);
             } else {
-                let value = list[key];
+                const value = list[key];
                 await this.populateMany(value.type, this[value.reference], key, value.collection);
             }
         }
-        return true;
     }
 
     /**
@@ -319,8 +290,8 @@ export class Model extends Document {
 
 export class QueryPointer<T extends Model> {
 
-    private _queryPointer: any;
-    private _document: any;
+    private readonly _queryPointer: any;
+    private readonly _document: any;
     private _timestamp: Date;
 
     constructor(queryPointer: any, document: any) {
@@ -371,37 +342,32 @@ export class QueryPointer<T extends Model> {
         return result;
     }
 
-    public async toArray(type?: { new(): T }): Promise<Array<T>> {
-        return await new Promise<Array<T>>((resolve, reject) => {
-            let results = this._queryPointer.toArray((err, results) => {
+    public toArray(type?: { new(): T }): Promise<Array<T>> {
+        return new Promise<Array<T>>(async (resolve, reject) => {
+            this._queryPointer.toArray((err, results) => {
                 if (err) reject(err);
 
                 this.emit();
 
-                let promises = [];
-                let documents = [];
+                const promises = [];
+                const documents = [];
 
                 // empty result set, return empty array
-                if (!results || results === null) {
+                if (!results) {
                     resolve([]);
                     return;
                 }
 
-                if (type) {
-                    results.forEach(doc => {
-                        let t = (new type()).__elevate(doc);
-                        if (t.__autoPopulate)
-                            promises.push(t.populateAll());
-                        documents.push(t);
-                    });
-                } else {
-                    results.forEach(doc => {
-                        let t = (new this._document()).__elevate(doc);
-                        if (t.__autoPopulate)
-                            promises.push(t.populateAll());
-                        documents.push(t);
-                    });
-                }
+                results.forEach(doc => {
+                    const t = type
+                      ? (new type()).__elevate(doc)
+                      : (new this._document()).__elevate(doc);
+
+                    if (t.__autoPopulate)
+                        promises.push(t.populateAll());
+
+                    documents.push(t);
+                });
 
                 Promise.all(promises).then(result => {
                     resolve(documents);
@@ -430,16 +396,16 @@ export class QueryPointer<T extends Model> {
  * @returns {(target) => any}
  * @constructor
  */
-// export function Collection(name: string) {
-//     return (target) => {
-//         target._collection = name;
-//     }
-// }
+export function Collection(name: string) {
+    return (target) => {
+        target._collection = name;
+    }
+}
 
 /**
  * Decorator for objectId type
  */
-export function objectid() {
+export const objectid = () => {
     return (target: any, key: string) => {
         let pKey = `_${ key }`;
 
@@ -498,7 +464,7 @@ export function objectid() {
  * @returns {(target: any, propertyKey: string, descriptor: PropertyDescriptor) => any}
  */
 // TODO: Complete embedded parsing
-export function embedded() {
+export const embedded = () => {
     return function (target: any, propertyKey: string) {
         if (!target._embedded) target._embedded = [];
         target._embedded.push(propertyKey);
@@ -513,24 +479,14 @@ export function embedded() {
  * @returns {(target: any, propertyKey: string, descriptor: PropertyDescriptor) => any}
  */
 // TODO: Complete embedded parsing
-export function Encrypted() {
+export const Encrypted = () => {
     return function (target: any, propertyKey: string) {
         if (!target.__encryptedFields) target.__encryptedFields = [];
         target.__encryptedFields.push(propertyKey);
     };
 }
 
-
-/*
-export function Type() {
-    return function (target: any, propertyKey: string) {
-        if (!target.__dynamicTypes) target.__dynamicTypes = [];
-        target.__dynamicTypes.push(propertyKey);
-    };
-}
- */
-
-export function Type(parser: (value: any) => any) {
+export const Type = (parser: (value: any) => any) => {
     return (target: any, key: string) => {
         if (!target.__dynamicTypes) target.__dynamicTypes = {};
         target.__dynamicTypes[key] = parser;
