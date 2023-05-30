@@ -103,10 +103,9 @@ describe('Basic attribute persistence tests', function () {
         expect(keys.length).to.be.equal(6);
 
         // find only one field
-        customer = await Customer.find({}, { firstname: true }).toArray();
+        customer = await Customer.find({}, { projection: { firstname: true } }).toArray();
         keys = Object.keys(customer[0]);
         expect(keys.length).to.be.equal(3);
-
     });
 
     it("Embedded Models are parsed", async() => {
@@ -134,8 +133,8 @@ describe('Basic attribute persistence tests', function () {
         await customer.save();
 
         // update property
-        await Customer.update({ _id : customer._id }, {
-            firstname: "Markus"
+        await Customer.updateOne({ _id : customer._id }, {
+            $set: { firstname: "Markus" }
         });
 
         // find updated model
@@ -327,7 +326,7 @@ describe('Basic attribute persistence tests', function () {
     });
 
     it("Find with projection", async () => {
-        const result = await Customer.find({}, { _id: false }).toArray();
+        const result = await Customer.find({}, { projection: { _id: false } }).toArray();
 
         for (const item of result) {
             expect(item._id).to.be.equal(undefined);
@@ -386,15 +385,13 @@ describe('Basic attribute persistence tests', function () {
 
         const deleteArticle = await Article.deleteOne(article._id);
         const findArticle = await Article.findOne(article._id);
-        expect(deleteArticle.result.n).to.be.equal(1);
-        expect(deleteArticle.result.ok).to.be.equal(1);
+        expect(deleteArticle.deletedCount).to.be.equal(1);
         expect(findArticle).to.be.equal(null);
 
 
         const deleteArticle2 = await Article.deleteOne({_id: article2._id});
         const findArticle2 = await Article.findOne(article2._id);
-        expect(deleteArticle2.result.n).to.be.equal(1);
-        expect(deleteArticle2.result.ok).to.be.equal(1);
+        expect(deleteArticle2.deletedCount).to.be.equal(1);
         expect(findArticle2).to.be.equal(null);
     });
 
@@ -409,8 +406,7 @@ describe('Basic attribute persistence tests', function () {
 
         const deleteArticles = await Article.deleteMany({name: 'TestArticle'});
         const findArticles = await Article.find({name: 'TestArticle'}).toArray();
-        expect(deleteArticles.result.n).to.be.equal(2);
-        expect(deleteArticles.result.ok).to.be.equal(1);
+        expect(deleteArticles.deletedCount).to.be.equal(2);
         expect(findArticles.length).to.be.equal(0);
     });
 

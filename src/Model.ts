@@ -342,38 +342,34 @@ export class QueryPointer<T extends Model> {
         return result;
     }
 
-    public toArray(type?: { new(): T }): Promise<Array<T>> {
-        return new Promise<Array<T>>(async (resolve, reject) => {
-            this._queryPointer.toArray((err, results) => {
-                if (err) reject(err);
+    public async toArray(type?: { new(): T }): Promise<Array<T>> {
+        try {
+            const results = await this._queryPointer.toArray();
+            this.emit();
 
-                this.emit();
+            const promises = [];
+            const documents = [];
 
-                const promises = [];
-                const documents = [];
+            // empty result set, return empty array
+            if (!results)
+                return [];
 
-                // empty result set, return empty array
-                if (!results) {
-                    resolve([]);
-                    return;
-                }
+            results.forEach(doc => {
+                const t = type
+                  ? (new type()).__elevate(doc)
+                  : (new this._document()).__elevate(doc);
 
-                results.forEach(doc => {
-                    const t = type
-                      ? (new type()).__elevate(doc)
-                      : (new this._document()).__elevate(doc);
+                if (t.__autoPopulate)
+                    promises.push(t.populateAll());
 
-                    if (t.__autoPopulate)
-                        promises.push(t.populateAll());
-
-                    documents.push(t);
-                });
-
-                Promise.all(promises).then(result => {
-                    resolve(documents);
-                });
+                documents.push(t);
             });
-        });
+
+            await Promise.all(promises);
+            return documents
+        } catch (error) {
+            throw error;
+        }
     }
 
     /**
@@ -484,6 +480,24 @@ export const Encrypted = () => {
         if (!target.__encryptedFields) target.__encryptedFields = [];
         target.__encryptedFields.push(propertyKey);
     };
+}
+
+export const Integer = () => {
+    return function (target: any, propertyKey: string) {
+        if (!target.__integerFields)
+            target.__integerFields= [];
+
+        target.__integerFields.push(propertyKey);
+    }
+}
+
+export const Text = () => {
+    return function (target: any, propertyKey: string) {
+        if (!target.__textFields)
+            target.__textFields= [];
+
+        target.__textFields.push(propertyKey);
+    }
 }
 
 export const Type = (parser: (value: any) => any) => {

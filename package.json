@@ -4,8 +4,12 @@
     "description": "Minimalistic schema free NodeJS / MongoDB DAO made with TypeScript. Meta properties allow hidden and ignored attributes, as well as field encryption",
     "main": "DataProvider.js",
     "scripts": {
-        "test": "mocha --recursive test",
-        "build": "tsc --p tsdeploy.json"
+        "test": "mocha --recursive dist/test",
+        "build": "tsc --p tsdeploy.json",
+        "commit": "cz",
+        "lint": "eslint . --ext .js,.ts",
+        "lint-fix": "eslint . --fix",
+        "prepare": "husky install"
     },
     "repository": {
         "type": "git",
@@ -32,6 +36,8 @@
         "@types/mocha": "^10.0.1",
         "@types/mongodb": "^4.0.7",
         "chai": "^4.3.7",
-        "mocha": "^10.2.0"
+        "husky": "^8.0.3",
+        "mocha": "^10.2.0",
+        "mongodb-memory-server": "^8.12.2"
     }
 }

@@ -85,6 +85,7 @@ export class Document {
                 && !propertyName.startsWith("_id")) {
                 continue;
             }
+
             if (target[propertyName] instanceof ObjectId) {
                 if (update[propertyName] instanceof ObjectId) {
                     target[propertyName] = update[propertyName];
@@ -190,7 +191,6 @@ export class Document {
 
     protected encryptDocument(doc: any) {
         if (this.__encryptedFields) {
-            //doc.__encrypted = [];
             for (const field of this.__encryptedFields) {
                 doc[field] = this.encrypt(doc[field]);
             }
