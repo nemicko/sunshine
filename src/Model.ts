@@ -42,6 +42,9 @@ export class Model extends Document {
         const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
         const timestamp = new Date();
 
+        // Set default values if there are any and values are not existing
+        this.setDefaultValueIfEmpty(_doc);
+
         // Check fields which are set as required
         if (this.__requiredFields?.length)
             validateRequiredFields(_doc, this.__requiredFields);
@@ -305,6 +308,30 @@ export class Model extends Document {
         });
     }
 
+    private setDefaultValueIfEmpty (_doc: any): void {
+        if (this.__textFields?.length) {
+            for (const field of this.__textFields) {
+                if (!_doc[field.propertyKey] && field.defaultValue)
+                    _doc[field.propertyKey] = field.defaultValue;
+            }
+        }
+
+        if (this.__numberFields?.length) {
+            for (const field of this.__numberFields)
+                this.checkAndAddDefaultValue(_doc, field.propertyKey, field.defaultValue);
+        }
+
+        if (this.__dateFields?.length) {
+            for (const field of this.__dateFields)
+                this.checkAndAddDefaultValue(_doc, field.propertyKey, field.defaultValue);
+        }
+    }
+
+    private checkAndAddDefaultValue(_doc: any, key: string, defaultValue: number | Date): void {
+        if (!_doc.hasOwnProperty(key) && defaultValue?.toString())
+            _doc[key] = defaultValue;
+    }
+
 }
 
 export class QueryPointer<T extends Model> {
@@ -456,27 +483,27 @@ export const Encrypted = () => {
     };
 }
 
-export const Number = (data?: { min?: number, max?: number }) => {
+export const number = (data?: { min?: number, max?: number, defaultValue?: number }) => {
     return function (target: Document, propertyKey: string) {
-        const { min, max } = data || {};
+        const { min, max, defaultValue } = data || {};
         if (!target.__numberFields)
             target.__numberFields = [];
 
-        target.__numberFields.push({ propertyKey, min, max });
+        target.__numberFields.push({ propertyKey, min, max, defaultValue });
     }
 }
 
-export const Text = (data?: { match?: RegExp }) => {
+export const text = (data?: { match?: RegExp, defaultValue?: string }) => {
     return function (target: Document, propertyKey: string) {
-        const { match } = data || {};
+        const { match, defaultValue } = data || {};
         if (!target.__textFields)
             target.__textFields = [];
 
-        target.__textFields.push({ propertyKey, match });
+        target.__textFields.push({ propertyKey, match, defaultValue });
     }
 }
 
-export const Boolean = () => {
+export const boolean = () => {
     return function (target: Document, propertyKey: string) {
         if (!target.__booleanFields)
             target.__booleanFields = [];
@@ -485,7 +512,7 @@ export const Boolean = () => {
     }
 }
 
-export const Email = () => {
+export const email = () => {
     return function (target: Document, propertyKey: string) {
         if (!target.__emailFields)
             target.__emailFields = [];
@@ -494,13 +521,13 @@ export const Email = () => {
     }
 }
 
-export const date = (data?: { min?: Date, max?: Date }) => {
+export const date = (data?: { min?: Date, max?: Date, defaultValue?: Date }) => {
     return function (target: Document, propertyKey: string) {
-        const { min, max } = data || {};
+        const { min, max, defaultValue } = data || {};
         if (!target.__dateFields)
             target.__dateFields = [];
 
-        target.__dateFields.push({ propertyKey, min, max });
+        target.__dateFields.push({ propertyKey, min, max, defaultValue });
     }
 }
 

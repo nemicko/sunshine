@@ -22,13 +22,13 @@
  */
 
 import {
-    Boolean,
+    boolean,
     Collection,
     Encrypted,
     Model,
-    Number,
+    number,
     Required,
-    Text,
+    text,
     Type
 } from "../../src/Model"
 import {Binary} from "mongodb";
@@ -38,13 +38,13 @@ import {Bytes32} from "./Bytes32";
 export class Article extends Model {
 
     @Required()
-    @Text({ match: /^[^0-9]+$/ })
+    @text({ match: /^[^0-9]+$/ })
     name: string;
     description: string | Object;
 
     binaryField: Binary;
 
-    @Number({ min: 10, max: 100 })
+    @number({ min: 10, max: 100 })
     price: number;
     stock: number;
 
@@ -61,7 +61,7 @@ export class Article extends Model {
     @Type((value) => { return new Bytes32(value); })
     customType: Bytes32;
 
-    @Boolean()
+    @boolean()
     active: boolean;
 }
 

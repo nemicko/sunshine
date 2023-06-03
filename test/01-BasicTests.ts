@@ -99,7 +99,7 @@ describe('Basic attribute persistence tests', function () {
         // find all fields
         let customer = await Customer.find({}).toArray();
         let keys = Object.keys(customer[0]);
-        expect(keys.length).to.be.equal(6);
+        expect(keys.length).to.be.equal(9);
 
         // find only one field
         customer = await Customer.find({}, { projection: { firstname: true } }).toArray();
