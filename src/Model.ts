@@ -5,9 +5,10 @@
  *  Copyright (c) 2017 Michael Hasler
  */
 
-import { Document } from "./Document"
-import { Sunshine } from "./Sunshine"
-import { EmbeddedModel } from "./EmbeddedModel"
+import { Document } from "./Document";
+import { Sunshine } from "./Sunshine";
+import { EmbeddedModel } from "./EmbeddedModel";
+import { validateDataTypes, validateRequiredFields } from './Validators';
 import {
     ObjectId,
     FindOptions,
@@ -17,7 +18,10 @@ import {
     UpdateOptions,
     DistinctOptions,
     AggregateOptions,
-    Collection as DatabaseCollection
+    Collection as DatabaseCollection,
+    IndexSpecification,
+    CreateIndexesOptions,
+    IndexDescription
 } from "mongodb"
 
 type Query = { [key: string]: any }
@@ -33,19 +37,35 @@ export class Model extends Document {
         super(data);
     }
 
-    async save(): Promise<boolean> {
-        if (this.hasOwnProperty("_id")) {
-            const _doc = this.fetchDocument(this, false, true, false);
-            const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
-            const timestamp = new Date();
+    async save(): Promise<void> {
+        const _doc = this.fetchDocument(this, false, true, false);
+        const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
+        const timestamp = new Date();
 
-            if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
-            this.encryptDocument(_doc);
+        // Check fields which are set as required
+        if (this.__requiredFields?.length)
+            validateRequiredFields(_doc, this.__requiredFields);
+
+        validateDataTypes(_doc, this);
+
+        if (this.__updateOnSave)
+            _doc[this.__updateOnSave] = new Date();
+
+        this.encryptDocument(_doc);
+
+        // Remove prefixed helper variables before save
+        Object.entries(_doc).forEach(([key]) => {
+            if (key !== '__updateOnSave' && key.includes('__')) {
+                delete _doc[key]
+            }
+        })
+
+        if (this.hasOwnProperty("_id")) {
             if (collection.replaceOne) {
                 try {
                     await collection.replaceOne({ _id: this._id }, _doc, { upsert: true });
                     Model.emit("update", (this.constructor as any)._collection, timestamp);
-                    return true;
+                    return;
                 } catch (error) {
                     throw error;
                 }
@@ -59,23 +79,14 @@ export class Model extends Document {
             }
         }
         else
-            return this.create();
+            await this.create(_doc, collection, timestamp);
     }
 
-    async create(): Promise<boolean> {
-        const _doc = this.fetchDocument(this, false, true, false);
-        const collection = Sunshine.getConnection().collection((this.constructor as any)._collection);
-
-        const timestamp = new Date();
-
-        if (this.__updateOnSave) _doc[this.__updateOnSave] = new Date();
-
-        this.encryptDocument(_doc);
+    async create(_doc: any, collection: DatabaseCollection, timestamp: Date): Promise<void> {
         try {
           const result = await collection.insertOne(_doc);
           this._id = result.insertedId;
           Model.emit("insert", (this.constructor as any)._collection, timestamp);
-          return true
         } catch (error) {
           throw error
         }
@@ -141,7 +152,7 @@ export class Model extends Document {
 
     }
 
-    static find<T extends Model>(query, options?: FindOptions, collection?: string): QueryPointer<T> {
+    static find<T extends Model>(query: Query, options?: FindOptions, collection?: string): QueryPointer<T> {
         const _collection = (collection) ? collection : this._collection;
 
         const queryPointer = Sunshine.getConnection().collection(_collection).find(query, options);
@@ -155,7 +166,7 @@ export class Model extends Document {
         return new QueryPointer<T>(queryPointer, this);
     }
 
-    static async distinct<T extends Model>(key: string, query: Query[], options?: DistinctOptions): Promise<T[]> {
+    static async distinct(key: string, query: Query, options?: DistinctOptions): Promise<any[]> {
         const _collection = this._collection;
         const timestamp = new Date();
 
@@ -204,6 +215,14 @@ export class Model extends Document {
         } catch (error) {
             throw error;
         }
+    }
+
+    static createIndex (indexSpec: IndexSpecification, options?: CreateIndexesOptions): Promise<string> {
+        return Sunshine.getConnection().collection(this._collection).createIndex(indexSpec, options);
+    }
+
+    static createIndexes (indexSpecs: IndexDescription[], options?: CreateIndexesOptions): Promise<string[]> {
+        return Sunshine.getConnection().collection(this._collection).createIndexes(indexSpecs, options);
     }
 
     static collection(): DatabaseCollection {
@@ -403,60 +422,16 @@ export function Collection(name: string) {
  */
 export const objectid = () => {
     return (target: any, key: string) => {
-        let pKey = `_${ key }`;
+        if (!target.__objectIdFields)
+            target.__objectIdFields = [];
 
-        // called at runtime to access (this) as instance of class
-        let init = function (isGet: boolean) {
-            return function (newVal?) {
-
-                // Hidden property
-                Object.defineProperty(this, pKey, { value: 0, enumerable: false, configurable: true, writable: true });
-
-                // Public property
-                Object.defineProperty(this, key, {
-                    get: () => {
-                        return this[pKey];
-                    },
-                    set: (val) => {
-                        if (val instanceof ObjectId) {
-                            this[pKey] = val;
-                        } else {
-                            try {
-                                this[pKey] = ObjectId.createFromHexString(val);
-                            } catch (exception) {
-                                this[pKey] = null;
-                            }
-                        }
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-
-                // Set / get values
-                if (isGet) {
-                    return this[key];
-                } else {
-                    this[key] = newVal;
-                }
-            };
-        };
-
-        // Will be called on first execution and replaced
-        return Object.defineProperty(target, key, {
-            get: init(true),
-            set: init(false),
-            enumerable: true,
-            configurable: true
-        });
+        target.__objectIdFields.push(key);
     };
 }
-
-//}
 
 /**
  * Reference embedded
  *
- * @param {boolean} value
  * @returns {(target: any, propertyKey: string, descriptor: PropertyDescriptor) => any}
  */
 // TODO: Complete embedded parsing
@@ -471,32 +446,70 @@ export const embedded = () => {
 /**
  * Reference encrypted
  *
- * @param {boolean} value
  * @returns {(target: any, propertyKey: string, descriptor: PropertyDescriptor) => any}
  */
 // TODO: Complete embedded parsing
 export const Encrypted = () => {
-    return function (target: any, propertyKey: string) {
+    return function (target: Document, propertyKey: string) {
         if (!target.__encryptedFields) target.__encryptedFields = [];
         target.__encryptedFields.push(propertyKey);
     };
 }
 
-export const Integer = () => {
-    return function (target: any, propertyKey: string) {
-        if (!target.__integerFields)
-            target.__integerFields= [];
+export const Number = (data?: { min?: number, max?: number }) => {
+    return function (target: Document, propertyKey: string) {
+        const { min, max } = data || {};
+        if (!target.__numberFields)
+            target.__numberFields = [];
 
-        target.__integerFields.push(propertyKey);
+        target.__numberFields.push({ propertyKey, min, max });
     }
 }
 
-export const Text = () => {
-    return function (target: any, propertyKey: string) {
+export const Text = (data?: { match?: RegExp }) => {
+    return function (target: Document, propertyKey: string) {
+        const { match } = data || {};
         if (!target.__textFields)
-            target.__textFields= [];
+            target.__textFields = [];
 
-        target.__textFields.push(propertyKey);
+        target.__textFields.push({ propertyKey, match });
+    }
+}
+
+export const Boolean = () => {
+    return function (target: Document, propertyKey: string) {
+        if (!target.__booleanFields)
+            target.__booleanFields = [];
+
+        target.__booleanFields.push(propertyKey);
+    }
+}
+
+export const Email = () => {
+    return function (target: Document, propertyKey: string) {
+        if (!target.__emailFields)
+            target.__emailFields = [];
+
+        target.__emailFields.push(propertyKey);
+    }
+}
+
+export const date = (data?: { min?: Date, max?: Date }) => {
+    return function (target: Document, propertyKey: string) {
+        const { min, max } = data || {};
+        if (!target.__dateFields)
+            target.__dateFields = [];
+
+        target.__dateFields.push({ propertyKey, min, max });
+    }
+}
+
+export const Required = () => {
+    return function (target: Document, propertyKey: string) {
+        if (!target.__requiredFields)
+            target.__requiredFields = [];
+
+        target.__requiredFields.push(propertyKey);
     }
 }
 

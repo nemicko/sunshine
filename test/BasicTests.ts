@@ -50,7 +50,6 @@ describe('Basic attribute persistence tests', function () {
 
         await order.save();
 
-        console.log(order._id);
         let newOrder = await Order.findOne<Order>({ _id : order._id });
 
         expect(newOrder.created).to.be.an("Date");
@@ -230,6 +229,7 @@ describe('Basic attribute persistence tests', function () {
 
         const article = new Article();
         article.encryptedProperty = "Hello Rijeka";
+        article.name = "Test article name";
 
         await article.save();
 
@@ -264,6 +264,7 @@ describe('Basic attribute persistence tests', function () {
 
         const buffer = Buffer.from([1, 2, 3]);
         article.binaryField = new Binary(buffer);
+        article.name = "Binary article name"
 
         await article.save();
         expect(article.binaryField).to.be.instanceOf(Binary);
@@ -276,6 +277,7 @@ describe('Basic attribute persistence tests', function () {
     it("Array with number types", async () => {
 
         const article = new Article();
+        article.name = "Array article name"
         article.numberArray = [1, 2, 3, 4, 5, 6];
         article.numberObjectArray = [{
             data: [10, 2]
@@ -367,6 +369,7 @@ describe('Basic attribute persistence tests', function () {
         ];
 
         const article = new Article();
+        article.name = 'Array of arrays article name'
         article.arrayOfArrays = arrayOfArrays
         await article.save();
 
@@ -408,6 +411,21 @@ describe('Basic attribute persistence tests', function () {
         const findArticles = await Article.find({name: 'TestArticle'}).toArray();
         expect(deleteArticles.deletedCount).to.be.equal(2);
         expect(findArticles.length).to.be.equal(0);
+    });
+
+    it('should get distinct customer firstnames', async function () {
+        const result = await Customer.distinct('firstname', {});
+
+        expect(result.length).to.equal(2);
+        expect(result.findIndex((name) => name === 'Hans')).to.be.greaterThan(-1)
+        expect(result.findIndex((name) => name === 'Markus')).to.be.greaterThan(-1)
+    });
+
+    it('should get distinct customer firstnames with filter', async function () {
+        const result = await Customer.distinct('firstname', { lastname: { $exists: true } });
+
+        expect(result.length).to.equal(1);
+        expect(result.findIndex((name) => name === 'Markus')).to.be.greaterThan(-1)
     });
 
 });

@@ -15,7 +15,7 @@ import {Bytes32} from "./models/Bytes32";
  *  __hiddenAttributes
  *
  */
-describe('Custom behavorial tests', function () {
+describe('Custom behavioral tests', function () {
 
     it("Ignored (underline-prefix) attributes are not persisted", async () => {
 
@@ -74,6 +74,7 @@ describe('Custom behavorial tests', function () {
     it("Test custom Type parsing", async () => {
 
         const article = new Article();
+        article.name = 'Test custom type name'
         article.customType = new Bytes32("test");
         await article.save();
 

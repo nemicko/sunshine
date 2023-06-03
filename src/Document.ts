@@ -1,6 +1,6 @@
-import { Binary, ObjectId } from "mongodb";
 import { Sunshine } from "./Sunshine";
 import * as CryptoJS from "crypto-js";
+import { Binary, ObjectId } from "mongodb";
 
 const objectIdRe = /^[0-9a-fA-F]{24}$/;
 
@@ -42,6 +42,48 @@ export class Document {
      * @param data
      */
     public __encryptedFields: Array<string>;
+
+    /**
+     * Required fields
+     * @param data
+     */
+    public __requiredFields: Array<string>;
+
+    /**
+     * Number fields
+     * @param data
+     */
+    public __numberFields: { propertyKey: string, min?: number, max?: number }[];
+
+    /**
+     * Text fields
+     * @param data
+     */
+    public __textFields: { propertyKey: string, match?: RegExp }[];
+
+    /**
+     * Boolean fields
+     * @param data
+     */
+    public __booleanFields: Array<string>;
+
+    /**
+     * Boolean fields
+     * @param data
+     */
+    public __objectIdFields: Array<string>;
+
+    /**
+     * Boolean fields
+     * @param data
+     */
+    public __emailFields: Array<string>;
+
+    /**
+     * Boolean fields
+     * @param data
+     */
+    public __dateFields: { propertyKey: string, min?: Date, max?: Date }[];
 
     constructor(data?: any) {
         //this.__autoPopulate = false;
