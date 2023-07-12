@@ -8,7 +8,6 @@
 import { Document } from "./Document";
 import { Sunshine } from "./Sunshine";
 import { EmbeddedModel } from "./EmbeddedModel";
-import { validateDataTypes, validateRequiredFields } from './Validators';
 import {
     ObjectId,
     FindOptions,
@@ -23,6 +22,7 @@ import {
     CreateIndexesOptions,
     IndexDescription
 } from "mongodb"
+import { Validators } from './Validators'
 
 type Query = { [key: string]: any }
 export class Model extends Document {
@@ -45,11 +45,8 @@ export class Model extends Document {
         // Set default values if there are any and values are not existing
         this.setDefaultValueIfEmpty(_doc);
 
-        // Check fields which are set as required
-        if (this.__requiredFields?.length)
-            validateRequiredFields(_doc, this.__requiredFields);
-
-        validateDataTypes(_doc, this);
+        // Validate required fields and specific data types
+        this.validate(_doc)
 
         if (this.__updateOnSave)
             _doc[this.__updateOnSave] = new Date();
@@ -85,7 +82,7 @@ export class Model extends Document {
             await this.create(_doc, collection, timestamp);
     }
 
-    async create(_doc: any, collection: DatabaseCollection, timestamp: Date): Promise<void> {
+    private async create(_doc: any, collection: DatabaseCollection, timestamp: Date): Promise<void> {
         try {
           const result = await collection.insertOne(_doc);
           this._id = result.insertedId;
@@ -93,6 +90,15 @@ export class Model extends Document {
         } catch (error) {
           throw error
         }
+    }
+
+    private validate (_doc: any): void {
+        const validators = new Validators();
+        // Check fields which are set as required
+        if (this.__requiredFields?.length)
+            validators.validateRequiredFields(_doc, this.__requiredFields);
+
+        validators.validateDataTypes(_doc, this);
     }
 
     static async findOneDiscrete<T extends Model>(query, type?: { new(): T }, collection?: string): Promise<T> {

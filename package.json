@@ -5,7 +5,7 @@
     "main": "DataProvider.js",
     "scripts": {
         "test": "mocha --recursive dist/test",
-        "build": "tsc --p tsdeploy.json"
+        "build": "tsc --p tsdeploy.json && cp package.json lib/"
     },
     "repository": {
         "type": "git",
@@ -25,7 +25,7 @@
     "homepage": "https://github.com/nemicko/sunshine#readme",
     "dependencies": {
         "crypto-js": "^4.1.1",
-        "mongodb": "^5.5.0"
+        "mongodb": "^5.7.0"
     },
     "devDependencies": {
         "@types/chai": "^4.3.5",
@@ -36,6 +36,6 @@
         "chai-as-promised": "^7.1.1",
         "husky": "^8.0.3",
         "mocha": "^10.2.0",
-        "mongodb-memory-server": "^8.12.2"
+        "mongodb-memory-server": "^8.13.0"
     }
 }

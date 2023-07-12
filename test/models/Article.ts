@@ -30,7 +30,7 @@ import {
     Required,
     text,
     Type
-} from "../../src/Model"
+} from "../../src"
 import {Binary} from "mongodb";
 import {Bytes32} from "./Bytes32";
 

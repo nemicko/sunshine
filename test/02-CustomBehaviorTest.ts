@@ -1,7 +1,7 @@
-import {Item, Order} from "./models/Order";
 import {expect} from "chai";
 import {Article} from "./models/Article";
 import {Bytes32} from "./models/Bytes32";
+import {Item, Order} from "./models/Order";
 
 /**
  * Sunshine V1

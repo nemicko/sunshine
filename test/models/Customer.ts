@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH T
  */
 
-import { Collection, date, email, Model, number, text } from "../../src/Model"
+import { Collection, date, email, Model, number, text } from "../../src"
 
 /**
  * Schema for customer

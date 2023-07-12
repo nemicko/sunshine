@@ -1,6 +1,6 @@
 process.env.NODE_ENV = 'test';
 
-import {SunshineVirtual} from "../src/SunshineVirtual";
+import {SunshineVirtual} from "../src";
 
 process.on('unhandledRejection', function(reason, p){
     console.log(reason);

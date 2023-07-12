@@ -1,6 +1,8 @@
 import * as chai from 'chai'
+import { expect } from 'chai'
 import { ObjectId } from 'mongodb'
 import { Article } from './models/Article'
+import { Customer } from './models/Customer'
 import * as chaiAsPromised from 'chai-as-promised';
 import {
     RequiredFieldError,
@@ -8,9 +10,7 @@ import {
     InvalidFieldTypeError,
     InvalidNumberValueError,
     StringNotMatchingRegExpError
-} from '../src/Errors'
-import { Customer } from './models/Customer'
-import { expect } from 'chai'
+} from '../src'
 
 chai.use(chaiAsPromised);
 

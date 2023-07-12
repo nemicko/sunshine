@@ -15,15 +15,15 @@ export class Sunshine {
 
     private static eventEmitter = new EventEmitter();
 
-    static setEncryptionKey(key: string) {
+    static setEncryptionKey(key: string): void {
         Sunshine.properties.encryptionKey = key;
     }
 
-    static getEncryptionKey() {
+    static getEncryptionKey(): string {
         return Sunshine.properties.encryptionKey;
     }
 
-    static async connectURI(uri: string, encryptionKey?: string) {
+    static async connectURI(uri: string, encryptionKey?: string): Promise<void> {
         Sunshine.properties = {};
 
         try {
@@ -42,7 +42,7 @@ export class Sunshine {
         }
     }
 
-    static async connect(hostname: string, username: string, password: string, database: string, encryptionKey?: string) {
+    static async connect(hostname: string, username: string, password: string, database: string, encryptionKey?: string): Promise<void> {
         Sunshine.properties = {};
 
         let URI = "mongodb://";
@@ -54,29 +54,28 @@ export class Sunshine {
         return this.connectURI(URI, encryptionKey);
     }
 
-    static injectConnection(db: Db) {
+    static injectConnection(db: Db): void {
         this.db = db;
         this.isConnected = true;
     }
 
-    static on(event: string, callback: (event) => void) {
+    static on(event: string, callback: (event) => void): void {
         this.eventEmitter.on(event, callback);
     }
 
-    static event(name: string, payload: any) {
+    static event(name: string, payload: any): void {
         this.eventEmitter.emit(name, payload);
     }
 
-    static getConnection() {
+    static getConnection(): Db {
         if (!Sunshine.isConnected) {
             throw new Error("No connection available :(");
         }
         return Sunshine.db;
     }
 
-    static async disconnect(): Promise<boolean> {
+    static async disconnect(): Promise<void> {
         await this.mongoClient.close();
-        return true;
     }
 
 }

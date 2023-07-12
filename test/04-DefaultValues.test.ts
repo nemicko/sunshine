@@ -1,7 +1,7 @@
-import * as chai from 'chai'
-import * as chaiAsPromised from 'chai-as-promised';
 import { expect } from 'chai'
+import * as chai from 'chai'
 import { Customer } from './models/Customer'
+import * as chaiAsPromised from 'chai-as-promised';
 
 chai.use(chaiAsPromised);
 

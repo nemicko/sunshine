@@ -22,12 +22,10 @@
  */
 
 import {Article} from "./Article";
-
 import {ObjectId} from "mongodb";
 import {Customer} from "./Customer";
-
-import {EmbeddedModel} from "../../src/EmbeddedModel";
-import {Collection, embedded, Model, objectid} from "../../src/Model";
+import {EmbeddedModel} from "../../src";
+import {Collection, embedded, Model, objectid} from "../../src";
 
 export declare type Log = {
     type: string,
