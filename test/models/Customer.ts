@@ -31,7 +31,7 @@ import { Collection, date, email, Model, number, text } from "../../src"
  */
 
 @Collection("customers")
-export class Customer extends Model{
+export class Customer extends Model {
 
     title: string;
     firstname: string;

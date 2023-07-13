@@ -16,11 +16,14 @@ import {
     UpdateFilter,
     UpdateOptions,
     DistinctOptions,
+    BulkWriteResult,
     AggregateOptions,
-    Collection as DatabaseCollection,
+    IndexDescription,
+    BulkWriteOptions,
     IndexSpecification,
     CreateIndexesOptions,
-    IndexDescription
+    AnyBulkWriteOperation,
+    Collection as DatabaseCollection
 } from "mongodb"
 import { Validators } from './Validators'
 
@@ -219,6 +222,19 @@ export class Model extends Document {
 
         try {
             const result = await Sunshine.getConnection().collection(_collection).updateMany(criteria, update, options);
+            Model.emit("query", _collection, timestamp);
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async bulkWrite(operations: AnyBulkWriteOperation[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
+        const _collection = this._collection;
+        const timestamp = new Date();
+
+        try {
+            const result = await Sunshine.getConnection().collection(_collection).bulkWrite(operations, options);
             Model.emit("query", _collection, timestamp);
             return result;
         } catch (error) {

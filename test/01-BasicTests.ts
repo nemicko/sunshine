@@ -1,8 +1,15 @@
 import {expect} from "chai";
-import {Sunshine} from "../src";
+import { date, number, Sunshine, text } from "../src"
 import {Document} from "../src";
 import {EmbeddedModel} from "../src";
-import {Binary, ObjectId} from "mongodb";
+import {
+    Binary,
+    DeleteOneModel,
+    InsertOneModel,
+    ObjectId,
+    UpdateManyModel,
+    UpdateOneModel
+} from "mongodb"
 import {Article} from "./models/Article";
 import {Item, Order} from "./models/Order";
 import {Customer} from "./models/Customer";
@@ -427,5 +434,47 @@ describe('Basic attribute persistence tests', function () {
         expect(result.findIndex((name) => name === 'Markus')).to.be.greaterThan(-1)
     });
 
+    describe('Bulk actions', () => {
+
+        it('should bulk insert one, and delete one', async function () {
+            const insertOne: InsertOneModel = {
+                document: {
+                    firstname: 'Bulk',
+                    lastname: 'Name',
+                    email: 'bulk@test.com'
+                }
+            };
+            const deleteOne: DeleteOneModel = {
+                filter: {
+                    firstname: { $eq: 'Markus' }
+                }
+            };
+            const result = await Customer.bulkWrite([{ insertOne }, {deleteOne}]);
+            expect(result.insertedCount).to.equal(1);
+            expect(result.deletedCount).to.equal(1);
+        });
+
+        it('should bulk update one', async function () {
+            const updateOne: UpdateOneModel = {
+                filter: { customer_id: { $eq: new ObjectId('58f0c0ac235ea70d83e6c672') } },
+                update: { $set: { attributes: { payment: 'authorized' } } }
+            };
+
+            const result = await Order.bulkWrite([{ updateOne }]);
+            expect(result.matchedCount).to.equal(1);
+            expect(result.modifiedCount).to.equal(1);
+        });
+
+        it('should bulk update manu', async function () {
+            const updateMany: UpdateManyModel = {
+                filter: { customer_id: { $eq: new ObjectId('58f0c0ac235ea70d83e6c672') } },
+                update: { $set: { attributes: { payment: 'authorized' } } }
+            };
+
+            const result = await Order.bulkWrite([{ updateMany }]);
+            expect(result.matchedCount).to.equal(3);
+            expect(result.modifiedCount).to.equal(2);
+        })
+    })
 });
 
