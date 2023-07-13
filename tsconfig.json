@@ -6,13 +6,13 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "noImplicitAny": false,
-    "suppressImplicitAnyIndexErrors": true,
     "declaration": false,
     "experimentalDecorators": true
   },
   "exclude": [
     "node_modules",
-    "lib"
+    "lib",
+    "test"
   ]
 }
 

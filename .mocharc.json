@@ -1,8 +1,8 @@
 {
   "diff": true,
-  "file": "dist/test/environment.js",
+  "file": "test/environment.ts",
   "extension": [
-    "js"
+    "ts"
   ],
   "opts": false,
   "package": "./package.json",
