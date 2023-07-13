@@ -27,3 +27,9 @@ export class InvalidDateValueError extends Error {
     super(`Provided value '${value}' must be ${min ? 'bigger' : 'smaller'} than '${min || max}'`)
   }
 }
+
+export class InvalidKeyValueError extends Error {
+  constructor (key: string) {
+    super(`Object key provided "${ key }" is invalid and can not be part of object`)
+  }
+}

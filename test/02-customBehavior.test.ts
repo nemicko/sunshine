@@ -15,7 +15,7 @@ import {Item, Order} from "./models/Order";
  *  __hiddenAttributes
  *
  */
-describe('Custom behavioral tests', function () {
+describe('Custom behavioral tests', () => {
 
     it("Ignored (underline-prefix) attributes are not persisted", async () => {
 

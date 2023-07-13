@@ -26,6 +26,7 @@ import {
     Collection as DatabaseCollection
 } from "mongodb"
 import { Validators } from './Validators'
+import { InvalidKeyValueError } from './Errors'
 
 type Query = { [key: string]: any }
 export class Model extends Document {
@@ -61,7 +62,11 @@ export class Model extends Document {
             if (key !== '__updateOnSave' && key.includes('__')) {
                 delete _doc[key]
             }
-        })
+        });
+
+        // If object key has dot throw error
+        // e.g. { attributes: { test.key: 123 } }
+        this.validateIfObjectKeyHasDot(_doc)
 
         if (this.hasOwnProperty("_id")) {
             if (collection.replaceOne) {
@@ -83,6 +88,19 @@ export class Model extends Document {
         }
         else
             await this.create(_doc, collection, timestamp);
+    }
+
+    private validateIfObjectKeyHasDot(obj, stack = '') {
+        for (const property in obj) {
+            if (property.includes('.'))
+                throw new InvalidKeyValueError(property);
+
+            if (obj.hasOwnProperty(property)) {
+                if (typeof obj[property] == "object") {
+                    this.validateIfObjectKeyHasDot(obj[property], stack + '.' + property);
+                }
+            }
+        }
     }
 
     private async create(_doc: any, collection: DatabaseCollection, timestamp: Date): Promise<void> {

@@ -1,5 +1,9 @@
 import {expect} from "chai";
-import { date, number, Sunshine, text } from "../src"
+import {
+    InvalidKeyValueError,
+    number,
+    Sunshine,
+} from "../src"
 import {Document} from "../src";
 import {EmbeddedModel} from "../src";
 import {
@@ -14,6 +18,10 @@ import {Article} from "./models/Article";
 import {Item, Order} from "./models/Order";
 import {Customer} from "./models/Customer";
 import { LanguageModel } from "./models/LanguageModel";
+import * as chai from 'chai'
+import * as chaiAsPromised from 'chai-as-promised';
+
+chai.use(chaiAsPromised);
 
 const events = [];
 
@@ -22,7 +30,7 @@ const events = [];
  *
  * Copyright (c) Michael Hasler
  */
-describe('Basic attribute persistence tests', function () {
+describe('Basic attribute persistence tests', () => {
 
     before(done => {
         Sunshine.on("insert", event => events.push(event));
@@ -419,7 +427,7 @@ describe('Basic attribute persistence tests', function () {
         expect(findArticles.length).to.be.equal(0);
     });
 
-    it('should get distinct customer firstnames', async function () {
+    it('should get distinct customer firstnames', async () => {
         const result = await Customer.distinct('firstname', {});
 
         expect(result.length).to.equal(2);
@@ -427,7 +435,7 @@ describe('Basic attribute persistence tests', function () {
         expect(result.findIndex((name) => name === 'Markus')).to.be.greaterThan(-1)
     });
 
-    it('should get distinct customer firstnames with filter', async function () {
+    it('should get distinct customer firstnames with filter', async () => {
         const result = await Customer.distinct('firstname', { lastname: { $exists: true } });
 
         expect(result.length).to.equal(1);
@@ -436,7 +444,7 @@ describe('Basic attribute persistence tests', function () {
 
     describe('Bulk actions', () => {
 
-        it('should bulk insert one, and delete one', async function () {
+        it('should bulk insert one, and delete one', async () => {
             const insertOne: InsertOneModel = {
                 document: {
                     firstname: 'Bulk',
@@ -454,7 +462,7 @@ describe('Basic attribute persistence tests', function () {
             expect(result.deletedCount).to.equal(1);
         });
 
-        it('should bulk update one', async function () {
+        it('should bulk update one', async () => {
             const updateOne: UpdateOneModel = {
                 filter: { customer_id: { $eq: new ObjectId('58f0c0ac235ea70d83e6c672') } },
                 update: { $set: { attributes: { payment: 'authorized' } } }
@@ -465,7 +473,7 @@ describe('Basic attribute persistence tests', function () {
             expect(result.modifiedCount).to.equal(1);
         });
 
-        it('should bulk update manu', async function () {
+        it('should bulk update manu', async () => {
             const updateMany: UpdateManyModel = {
                 filter: { customer_id: { $eq: new ObjectId('58f0c0ac235ea70d83e6c672') } },
                 update: { $set: { attributes: { payment: 'authorized' } } }
@@ -474,7 +482,20 @@ describe('Basic attribute persistence tests', function () {
             const result = await Order.bulkWrite([{ updateMany }]);
             expect(result.matchedCount).to.equal(3);
             expect(result.modifiedCount).to.equal(2);
+        });
+    });
+    
+    describe('Dot notation in object keys', () => {
+
+        it('should test object key with dot in name', async () => {
+            const order = new Order();
+            order.attributes = {
+                ['user.email']: 'test@test.com'
+            };
+
+            await chai.expect(order.save()).to.eventually.be.rejectedWith(InvalidKeyValueError);
         })
+
     })
 });
 
