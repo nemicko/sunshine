@@ -22,12 +22,10 @@
  */
 
 import {Article} from "./Article";
-
 import {ObjectId} from "mongodb";
 import {Customer} from "./Customer";
-
-import {EmbeddedModel} from "../../src/EmbeddedModel";
-import {Collection, embedded, Model, objectid} from "../../src/Model";
+import {EmbeddedModel} from "../../src";
+import {Collection, embedded, Model, objectid} from "../../src";
 
 export declare type Log = {
     type: string,
@@ -84,16 +82,25 @@ export class Order extends Model {
 
     attributes: any;
 
+    article_ids: ObjectId[];
+    _articles?: Article[];
+
     created: Date;
     updated: Date;
 
     protected populatable(){
         return {
-            customer:{
+            customer: {
                 type: Customer,
                 collection: "customers",
                 reference: "customer_id",
                 many: false
+            },
+            articles: {
+                type: Article,
+                collection: 'articles',
+                reference: 'article_ids',
+                many: true
             }
         }
     }

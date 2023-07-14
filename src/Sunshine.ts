@@ -1,5 +1,5 @@
-import { MongoClient, Db } from "mongodb";
 import { EventEmitter } from "events";
+import { MongoClient, Db, ClientSession, ClientSessionOptions } from "mongodb"
 
 /**
  *  Sunshine DAO Connector
@@ -15,43 +15,34 @@ export class Sunshine {
 
     private static eventEmitter = new EventEmitter();
 
-    static setEncryptionKey(key: string) {
+    static setEncryptionKey(key: string): void {
         Sunshine.properties.encryptionKey = key;
     }
 
-    static getEncryptionKey() {
+    static getEncryptionKey(): string {
         return Sunshine.properties.encryptionKey;
     }
 
-    static connectURI(uri: string, encryptionKey?: string) {
-        return new Promise((resolve, reject) => {
-            Sunshine.properties = {};
+    static async connectURI(uri: string, encryptionKey?: string): Promise<void> {
+        Sunshine.properties = {};
 
-            const options = {
-                useUnifiedTopology: true,
-                useNewUrlParser: true
-            };
+        try {
+            const mongoClient = await MongoClient.connect(uri);
 
-            MongoClient.connect(uri, options, function (err, mongoClient) {
-                if (err) {
-                    reject(err);
-                    return;
-                }
+            Sunshine.mongoClient = mongoClient;
 
-                Sunshine.mongoClient = mongoClient;
-                // @ts-ignore
-                Sunshine.db = mongoClient.db(mongoClient.s.options.database);
-                Sunshine.isConnected = true;
+            Sunshine.db = mongoClient.db(mongoClient.options.dbName);
+            Sunshine.isConnected = true;
 
-                if (encryptionKey)
-                    Sunshine.properties.encryptionKey = encryptionKey;
-
-                resolve(true);
-            });
-        });
+            if (encryptionKey)
+                Sunshine.properties.encryptionKey = encryptionKey;
+            return;
+        } catch (error) {
+            throw error;
+        }
     }
 
-    static connect(hostname: string, username: string, password: string, database: string, encryptionKey?: string) {
+    static async connect(hostname: string, username: string, password: string, database: string, encryptionKey?: string): Promise<void> {
         Sunshine.properties = {};
 
         let URI = "mongodb://";
@@ -63,29 +54,32 @@ export class Sunshine {
         return this.connectURI(URI, encryptionKey);
     }
 
-    static injectConnection(db: Db) {
+    static startSession (options?: ClientSessionOptions): ClientSession {
+        return Sunshine.mongoClient.startSession(options);
+    }
+
+    static injectConnection(db: Db): void {
         this.db = db;
         this.isConnected = true;
     }
 
-    static on(event: string, callback: (event) => void) {
+    static on(event: string, callback: (event) => void): void {
         this.eventEmitter.on(event, callback);
     }
 
-    static event(name: string, payload: any) {
+    static event(name: string, payload: any): void {
         this.eventEmitter.emit(name, payload);
     }
 
-    static getConnection() {
+    static getConnection(): Db {
         if (!Sunshine.isConnected) {
             throw new Error("No connection available :(");
         }
         return Sunshine.db;
     }
 
-    static async disconnect(): Promise<boolean> {
+    static async disconnect(): Promise<void> {
         await this.mongoClient.close();
-        return true;
     }
 
 }

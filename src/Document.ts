@@ -1,6 +1,6 @@
-import { Binary, ObjectId } from "mongodb";
 import { Sunshine } from "./Sunshine";
 import * as CryptoJS from "crypto-js";
+import { Binary, ObjectId } from "mongodb";
 
 const objectIdRe = /^[0-9a-fA-F]{24}$/;
 
@@ -42,6 +42,48 @@ export class Document {
      * @param data
      */
     public __encryptedFields: Array<string>;
+
+    /**
+     * Required fields
+     * @param data
+     */
+    public __requiredFields: Array<string>;
+
+    /**
+     * Number fields
+     * @param data
+     */
+    public __numberFields: { propertyKey: string, min?: number, max?: number, defaultValue?: number }[];
+
+    /**
+     * Text fields
+     * @param data
+     */
+    public __textFields: { propertyKey: string, match?: RegExp, defaultValue?: string }[];
+
+    /**
+     * Boolean fields
+     * @param data
+     */
+    public __booleanFields: Array<string>;
+
+    /**
+     * Boolean fields
+     * @param data
+     */
+    public __objectIdFields: Array<string>;
+
+    /**
+     * Boolean fields
+     * @param data
+     */
+    public __emailFields: Array<string>;
+
+    /**
+     * Boolean fields
+     * @param data
+     */
+    public __dateFields: { propertyKey: string, min?: Date, max?: Date, defaultValue?: Date }[];
 
     constructor(data?: any) {
         //this.__autoPopulate = false;
@@ -85,6 +127,7 @@ export class Document {
                 && !propertyName.startsWith("_id")) {
                 continue;
             }
+
             if (target[propertyName] instanceof ObjectId) {
                 if (update[propertyName] instanceof ObjectId) {
                     target[propertyName] = update[propertyName];
@@ -190,7 +233,6 @@ export class Document {
 
     protected encryptDocument(doc: any) {
         if (this.__encryptedFields) {
-            //doc.__encrypted = [];
             for (const field of this.__encryptedFields) {
                 doc[field] = this.encrypt(doc[field]);
             }
