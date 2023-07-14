@@ -37,10 +37,7 @@ jobs:
         run: npm run build
         
       - name: Run script file
-        run: |
-           chmod +x ./shell.sh
-           ./shell.sh "${{ github.event.pull_request.labels[0].name }}"
-        shell: bash
+        run: ${PWD}/script
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
