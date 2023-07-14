@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH T
  */
 
-import { Collection, date, email, Model, number, text } from "../../src"
+import {Collection, Model} from "../../src/Model";
 
 /**
  * Schema for customer
@@ -31,25 +31,11 @@ import { Collection, date, email, Model, number, text } from "../../src"
  */
 
 @Collection("customers")
-export class Customer extends Model {
+export class Customer extends Model{
 
     title: string;
     firstname: string;
     lastname: string;
-
-    @email()
     email: string;
 
-    @date({
-        min: new Date(1990, 0, 1),
-        max: new Date(2010, 11, 31),
-        defaultValue: new Date(2010, 0, 1)
-    })
-    birth_date: Date;
-
-    @text({ defaultValue: 'test' })
-    nickname: string;
-
-    @number({ defaultValue: 0 })
-    height: number;
 }

@@ -21,30 +21,18 @@
  * OUT OF OR IN CONNECTION WITH T
  */
 
-import {
-    boolean,
-    Collection,
-    Encrypted,
-    Model,
-    number,
-    Required,
-    text,
-    Type
-} from "../../src"
+import {Collection, Encrypted, Model, Type} from "../../src/Model";
 import {Binary} from "mongodb";
 import {Bytes32} from "./Bytes32";
 
 @Collection("articles")
 export class Article extends Model {
 
-    @Required()
-    @text({ match: /^[^0-9]+$/ })
     name: string;
     description: string | Object;
 
     binaryField: Binary;
 
-    @number({ min: 10, max: 100 })
     price: number;
     stock: number;
 
@@ -60,8 +48,5 @@ export class Article extends Model {
 
     @Type((value) => { return new Bytes32(value); })
     customType: Bytes32;
-
-    @boolean()
-    active: boolean;
 }
 

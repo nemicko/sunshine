@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH T
  */
 
-import {Collection, Model} from "../../src";
+import {Collection, Model} from "../../src/Model";
 
 @Collection("languageModel")
 export class LanguageModel extends Model{

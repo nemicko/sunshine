@@ -7,7 +7,14 @@
     "outDir": "lib",
     "rootDir": "src",
     "declaration": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "types": [
+      "@types/node",
+      "@types/mongodb"
+    ]
   },
   "exclude": [
     "node_modules",
