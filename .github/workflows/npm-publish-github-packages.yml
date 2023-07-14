@@ -4,8 +4,8 @@
 name: Node.js Package
 
 on:
-  push:
-    branches: [ "master" ]
+  release:
+    types: [ created ]
 
 jobs:
   build:
@@ -38,8 +38,8 @@ jobs:
         
       - name: Run script file
         run: |
-           chmod +x ./shell.sh
-           ./shell.sh "${{ github.event.pull_request.labels[0].name }}"
+           chmod +x ../shell.sh
+           ../shell.sh ${{ github.event.release.tag_name }}
         shell: bash
       - run: npm publish
         env:
