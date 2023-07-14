@@ -11,6 +11,7 @@ import {
     InvalidNumberValueError,
     StringNotMatchingRegExpError
 } from '../src'
+import { Order } from './models/Order'
 
 chai.use(chaiAsPromised);
 
@@ -23,6 +24,13 @@ describe('Validation tests', () => {
     });
 
     describe('Number validation tests', () => {
+        it('should throw error for invalid objectId type', async () => {
+            const order = new Order();
+            (order as any).customer_id = '1234adasdas'
+
+            await chai.expect(order.save()).to.eventually.be.rejectedWith(InvalidFieldTypeError);
+        });
+
         it('should throw error for invalid number type', async () => {
             const article = new Article();
             article.name = 'Validation article name';
@@ -114,6 +122,27 @@ describe('Validation tests', () => {
     it('should throw error for invalid email type', async () => {
         const customer = new Customer();
         customer.email = 'test'
+
+        await chai.expect(customer.save()).to.eventually.be.rejectedWith(InvalidFieldTypeError);
+    });
+
+    it('should throw error for invalid email length', async () => {
+        const customer = new Customer();
+        customer.email = 'test.user@gmail.com' + 's'.repeat(256);
+
+        await chai.expect(customer.save()).to.eventually.be.rejectedWith(InvalidFieldTypeError);
+    });
+
+    it('should throw error for invalid email length before @ symbol', async () => {
+        const customer = new Customer();
+        customer.email = 'test.user'.repeat(10) + '@gmail.com';
+
+        await chai.expect(customer.save()).to.eventually.be.rejectedWith(InvalidFieldTypeError);
+    });
+
+    it('should throw error for invalid email domain length', async () => {
+        const customer = new Customer();
+        customer.email = 'test.user@gmail.' + 'com'.repeat(23);
 
         await chai.expect(customer.save()).to.eventually.be.rejectedWith(InvalidFieldTypeError);
     });

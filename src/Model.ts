@@ -5,9 +5,9 @@
  *  Copyright (c) 2017 Michael Hasler
  */
 
-import { Document } from "./Document";
-import { Sunshine } from "./Sunshine";
-import { EmbeddedModel } from "./EmbeddedModel";
+import { Document } from './Document';
+import { Sunshine } from './Sunshine';
+import { EmbeddedModel } from './EmbeddedModel';
 import {
     ObjectId,
     FindOptions,
@@ -23,8 +23,9 @@ import {
     IndexSpecification,
     CreateIndexesOptions,
     AnyBulkWriteOperation,
+    CountDocumentsOptions,
     Collection as DatabaseCollection
-} from "mongodb"
+} from 'mongodb'
 import { Validators } from './Validators'
 import { InvalidKeyValueError } from './Errors'
 
@@ -59,29 +60,20 @@ export class Model extends Document {
 
         // Remove prefixed helper variables before save
         Object.entries(_doc).forEach(([key]) => {
-            if (key !== '__updateOnSave' && key.includes('__')) {
+            if (key !== '__updateOnSave' && key.startsWith('__')) {
                 delete _doc[key]
             }
         });
 
-        // If object key has dot throw error
+        // If object key has dot, throw error
         // e.g. { attributes: { test.key: 123 } }
         this.validateIfObjectKeyHasDot(_doc)
 
-        if (this.hasOwnProperty("_id")) {
-            if (collection.replaceOne) {
-                try {
-                    await collection.replaceOne({ _id: this._id }, _doc, { upsert: true });
-                    Model.emit("update", (this.constructor as any)._collection, timestamp);
-                    return;
-                } catch (error) {
-                    throw error;
-                }
-            }
-
+        if (this.hasOwnProperty('_id')) {
             try {
-                await collection.updateOne({ _id: this._id }, _doc, { upsert: true });
-                Model.emit("update", (this.constructor as any)._collection, timestamp);
+                await collection.replaceOne({ _id: this._id }, _doc, { upsert: true });
+                Model.emit('update', (this.constructor as any)._collection, timestamp);
+                return;
             } catch (error) {
                 throw error;
             }
@@ -96,7 +88,7 @@ export class Model extends Document {
                 throw new InvalidKeyValueError(property);
 
             if (obj.hasOwnProperty(property)) {
-                if (typeof obj[property] == "object") {
+                if (typeof obj[property] == 'object') {
                     this.validateIfObjectKeyHasDot(obj[property], stack + '.' + property);
                 }
             }
@@ -107,7 +99,7 @@ export class Model extends Document {
         try {
           const result = await collection.insertOne(_doc);
           this._id = result.insertedId;
-          Model.emit("insert", (this.constructor as any)._collection, timestamp);
+          Model.emit('insert', (this.constructor as any)._collection, timestamp);
         } catch (error) {
           throw error
         }
@@ -128,7 +120,7 @@ export class Model extends Document {
 
         try {
           const result = await Sunshine.getConnection().collection(_collection).findOne(query);
-          Model.emit("query", _collection, timestamp);
+          Model.emit('query', _collection, timestamp);
           if (!result)
             return null;
 
@@ -154,7 +146,7 @@ export class Model extends Document {
 
         try {
             const result = await Sunshine.getConnection().collection(this._collection).findOne(query, options);
-            Model.emit("query", this._collection, timestamp);
+            Model.emit('query', this._collection, timestamp);
             if (!result)
                 return null;
 
@@ -202,7 +194,7 @@ export class Model extends Document {
 
         try {
             const result = await Sunshine.getConnection().collection(_collection).distinct(key, query, options);
-            Model.emit("query", _collection, timestamp);
+            Model.emit('query', _collection, timestamp);
 
             return result;
         } catch (error) {
@@ -222,7 +214,7 @@ export class Model extends Document {
 
         try {
             const result = await Sunshine.getConnection().collection(_collection).updateOne(criteria, update, options);
-            Model.emit("query", _collection, timestamp);
+            Model.emit('query', _collection, timestamp);
             return result
         } catch (error) {
             throw error;
@@ -240,20 +232,33 @@ export class Model extends Document {
 
         try {
             const result = await Sunshine.getConnection().collection(_collection).updateMany(criteria, update, options);
-            Model.emit("query", _collection, timestamp);
+            Model.emit('query', _collection, timestamp);
             return result;
         } catch (error) {
             throw error;
         }
     }
 
-    static async bulkWrite(operations: AnyBulkWriteOperation[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
+    static async bulkWrite (operations: AnyBulkWriteOperation[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
         const _collection = this._collection;
         const timestamp = new Date();
 
         try {
             const result = await Sunshine.getConnection().collection(_collection).bulkWrite(operations, options);
-            Model.emit("query", _collection, timestamp);
+            Model.emit('query', _collection, timestamp);
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async count (filter?: Query, options?: CountDocumentsOptions): Promise<number> {
+        const _collection = this._collection;
+        const timestamp = new Date();
+
+        try {
+            const result = await Sunshine.getConnection().collection(_collection).countDocuments(filter)
+            Model.emit('query', _collection, timestamp);
             return result;
         } catch (error) {
             throw error;
@@ -273,7 +278,7 @@ export class Model extends Document {
     }
 
     async populate<T extends Model>(type: { new(): T }, _id: ObjectId, name: string, collection: string): Promise<T> {
-        const _name = "_" + name;
+        const _name = '_' + name;
         if (this[_name]) {
             return this[_name]
         }
@@ -284,7 +289,7 @@ export class Model extends Document {
     }
 
     async populateMany<T extends Model>(type: { new(): T }, _ids: Array<ObjectId>, name: string, collection: string): Promise<Array<T>> {
-        const _name = "_" + name;
+        const _name = '_' + name;
         if (this[_name]) {
             return this[_name]
         }
@@ -421,13 +426,6 @@ export class QueryPointer<T extends Model> {
     }
 
     // --- Close Pipeline -------------------------------------------------------
-
-    public async count(): Promise<number> {
-        const result = await this._queryPointer.count();
-        this.emit();
-        return result;
-    }
-
     public async toArray(type?: { new(): T }): Promise<Array<T>> {
         try {
             const results = await this._queryPointer.toArray();
@@ -463,7 +461,7 @@ export class QueryPointer<T extends Model> {
      * @private
      */
     private emit() {
-        Sunshine.event("query", {
+        Sunshine.event('query', {
             collection: this._queryPointer.namespace.collection,
             runtime: (new Date()).getTime() - this._timestamp.getTime()
         });

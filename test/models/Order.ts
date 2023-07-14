@@ -82,16 +82,25 @@ export class Order extends Model {
 
     attributes: any;
 
+    article_ids: ObjectId[];
+    _articles?: Article[];
+
     created: Date;
     updated: Date;
 
     protected populatable(){
         return {
-            customer:{
+            customer: {
                 type: Customer,
                 collection: "customers",
                 reference: "customer_id",
                 many: false
+            },
+            articles: {
+                type: Article,
+                collection: 'articles',
+                reference: 'article_ids',
+                many: true
             }
         }
     }

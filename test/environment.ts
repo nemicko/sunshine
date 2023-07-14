@@ -19,7 +19,8 @@ process.on('uncaughtException', function (exception) {
  */
 before(async () => {
     try {
-        await SunshineVirtual.connectVirtual({ encryptionKey: "123456789" });
+        await SunshineVirtual.connectVirtual({ encryptionKey: '123456789' });
+        SunshineVirtual.setEncryptionKey('123456789')
     } catch (error){
         console.log(error)
     }

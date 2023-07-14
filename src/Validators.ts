@@ -1,5 +1,5 @@
-import { ObjectId } from 'mongodb';
 import { Model } from './Model'
+import { ObjectId } from 'mongodb';
 import {
     InvalidDateValueError,
     InvalidFieldTypeError,
