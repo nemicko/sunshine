@@ -1,5 +1,5 @@
 {
-    "name": "sunshine-dao",
+    "name": "@aarbanas/sunshine-dao",
     "version": "3.0.0",
     "description": "Minimalistic schema free NodeJS / MongoDB DAO made with TypeScript. Meta properties allow hidden and ignored attributes, as well as field encryption",
     "main": "DataProvider.js",
