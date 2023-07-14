@@ -37,7 +37,10 @@ jobs:
         run: npm run build
         
       - name: Run script file
-        run: ${PWD}/script
-      - run: npm publish
+        run: ./script.sh ${{ github.event.release.tag_name }}
+
+      - name: Publish to npm
+        run: npm publish
+        working-directory: ./lib
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
