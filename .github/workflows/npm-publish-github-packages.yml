@@ -4,8 +4,8 @@
 name: Node.js Package
 
 on:
-  push:
-    branches: [ "master" ]
+  release:
+    types: [ created ]
 
 jobs:
   build:
@@ -16,6 +16,7 @@ jobs:
         with:
           node-version: 16
       - run: npm ci
+      - run: npm run lint
       - run: npm test
 
   publish-gpr:

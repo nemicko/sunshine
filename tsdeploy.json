@@ -1,17 +1,13 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2017",
-    "moduleResolution": "node",
-    "noImplicitAny": false,
-    "outDir": "lib",
-    "rootDir": "src",
-    "declaration": true,
-    "experimentalDecorators": true
-  },
-  "exclude": [
-    "node_modules",
-    "test",
-    "lib"
-  ]
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es2017",
+        "moduleResolution": "node",
+        "noImplicitAny": false,
+        "outDir": "lib",
+        "rootDir": "src",
+        "declaration": true,
+        "experimentalDecorators": true
+    },
+    "exclude": ["node_modules", "test", "lib"]
 }

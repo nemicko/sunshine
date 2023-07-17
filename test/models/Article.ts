@@ -29,18 +29,16 @@ import {
     number,
     Required,
     text,
-    Type
-} from "../../src"
-import {Binary} from "mongodb";
-import {Bytes32} from "./Bytes32";
+    Type,
+} from '../../src';
+import { Binary } from 'mongodb';
+import { Bytes32 } from './Bytes32';
 
-@Collection("articles")
+@Collection('articles')
 export class Article extends Model {
-
     @Required()
     @text({ match: /^[^0-9]+$/ })
     name: string;
-    description: string | Object;
 
     binaryField: Binary;
 
@@ -49,19 +47,23 @@ export class Article extends Model {
     stock: number;
 
     numberArray: Array<number>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     arrayOfArrays: Array<Array<any>>;
 
-    numberObjectArray: [{
-        data: Array<number>
-    }];
+    numberObjectArray: [
+        {
+            data: Array<number>;
+        },
+    ];
 
     @Encrypted()
     encryptedProperty: string;
 
-    @Type((value) => { return new Bytes32(value); })
+    @Type((value) => {
+        return new Bytes32(value);
+    })
     customType: Bytes32;
 
     @boolean()
     active: boolean;
 }
-

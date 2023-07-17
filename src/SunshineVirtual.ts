@@ -1,11 +1,11 @@
-import { Sunshine } from "./Sunshine";
+import { Sunshine } from './Sunshine';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 type VirtualConnectionData = {
-    port?: number,
-    dbname?: string,
-    encryptionKey?: string
-}
+    port?: number;
+    dbname?: string;
+    encryptionKey?: string;
+};
 /**
  *  Sunshine DAO Virtual Connector
  *
@@ -17,20 +17,21 @@ type VirtualConnectionData = {
  *  @ Michael Hasler
  */
 export class SunshineVirtual extends Sunshine {
-
     static async connectVirtual(data?: VirtualConnectionData): Promise<void> {
-        let { port, dbname, encryptionKey } = data || {}
+        //eslint-disable-next-line prefer-const
+        let { port, dbname, encryptionKey } = data || {};
         Sunshine.properties = {};
 
-        port = (port) ? port : 8000;
+        port = port ? port : 8000;
         const mongoServerInstance = new MongoMemoryServer({
             instance: {
                 port: port,
-                dbName: dbname ? dbname : "virtual",
-                storageEngine: "wiredTiger"
-            }
+                dbName: dbname ? dbname : 'virtual',
+                storageEngine: 'wiredTiger',
+            },
         });
 
+        //eslint-disable-next-line no-useless-catch
         try {
             await mongoServerInstance.start();
             await this.connectURI(mongoServerInstance.getUri(), encryptionKey);
@@ -39,4 +40,3 @@ export class SunshineVirtual extends Sunshine {
         }
     }
 }
-

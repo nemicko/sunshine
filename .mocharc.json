@@ -1,22 +1,15 @@
 {
-  "diff": true,
-  "file": "test/environment.ts",
-  "extension": [
-    "ts"
-  ],
-  "opts": false,
-  "package": "./package.json",
-  "reporter": "spec",
-  "slow": 75,
-  "timeout": 20000,
-  "exit": true,
-  "ui": "bdd",
-  "watch-files": [
-    "lib/**/*.js",
-    "test/**/*.js"
-  ],
-  "watch-ignore": [
-    "lib/vendor"
-  ],
-  "recursive": true
+    "diff": true,
+    "file": "test/environment.ts",
+    "extension": ["ts"],
+    "opts": false,
+    "package": "./package.json",
+    "reporter": "spec",
+    "slow": 75,
+    "timeout": 20000,
+    "exit": true,
+    "ui": "bdd",
+    "watch-files": ["lib/**/*.js", "test/**/*.js"],
+    "watch-ignore": ["lib/vendor"],
+    "recursive": true
 }

@@ -21,16 +21,14 @@
  * OUT OF OR IN CONNECTION WITH T
  */
 
-import {Collection, Model} from "../../src";
+import { Collection, Model } from '../../src';
 
-@Collection("languageModel")
-export class LanguageModel extends Model{
-
+@Collection('languageModel')
+export class LanguageModel extends Model {
     name: string;
 
     constructor(name: string) {
         super();
         this.name = name;
     }
-
 }
