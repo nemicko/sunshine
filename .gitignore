@@ -3,5 +3,4 @@ node_modules
 lib
 dist
 .husky
-.czrc
 .nyc_output
