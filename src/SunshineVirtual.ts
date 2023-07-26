@@ -1,6 +1,11 @@
-import { Sunshine } from "./Sunshine";
+import { Sunshine } from './Sunshine';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
+type VirtualConnectionData = {
+    port?: number;
+    dbname?: string;
+    encryptionKey?: string;
+};
 /**
  *  Sunshine DAO Virtual Connector
  *
@@ -12,32 +17,26 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
  *  @ Michael Hasler
  */
 export class SunshineVirtual extends Sunshine {
+    static async connectVirtual(data?: VirtualConnectionData): Promise<void> {
+        //eslint-disable-next-line prefer-const
+        let { port, dbname, encryptionKey } = data || {};
+        Sunshine.properties = {};
 
-    static connectVirtual(port?: number, dbname?: string) {
-        return new Promise((resolve, reject) => {
-
-            Sunshine.properties = {};
-
-            port = (port) ? port : 8000;
-            const mongoServerInstance = new MongoMemoryServer({
-                instance: {
-                    port: port,
-                    dbName: dbname ? dbname : "virtual",
-                    storageEngine: "wiredTiger"
-                }
-            });
-
-            mongoServerInstance.start().then(() => {
-                this.connectURI(mongoServerInstance.getUri()).then(res => {
-                    resolve(res)
-                }).catch(err => {
-                    reject(err);
-                });
-            }).catch(error => {
-                reject(error);
-            });
+        port = port ? port : 8000;
+        const mongoServerInstance = new MongoMemoryServer({
+            instance: {
+                port: port,
+                dbName: dbname ? dbname : 'virtual',
+                storageEngine: 'wiredTiger',
+            },
         });
+
+        //eslint-disable-next-line no-useless-catch
+        try {
+            await mongoServerInstance.start();
+            await this.connectURI(mongoServerInstance.getUri(), encryptionKey);
+        } catch (error) {
+            throw error;
+        }
     }
-
 }
-

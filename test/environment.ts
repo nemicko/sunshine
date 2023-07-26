@@ -1,8 +1,8 @@
 process.env.NODE_ENV = 'test';
 
-import {SunshineVirtual} from "../src/SunshineVirtual";
+import { SunshineVirtual } from '../src';
 
-process.on('unhandledRejection', function(reason, p){
+process.on('unhandledRejection', function (reason, p) {
     console.log(reason);
     console.log(p);
 });
@@ -17,23 +17,16 @@ process.on('uncaughtException', function (exception) {
  * Virtual MongoDB instance
  *
  */
-before(done => {
-
+before(async () => {
     try {
-        SunshineVirtual.connectVirtual().then(success => {
-            SunshineVirtual.setEncryptionKey("123456789");
-            done();
-        }).catch(exception => {
-            console.log(exception);
-        });
-    } catch (exception){
-        console.log(exception);
+        await SunshineVirtual.connectVirtual({ encryptionKey: '123456789' });
+        SunshineVirtual.setEncryptionKey('123456789');
+    } catch (error) {
+        console.log(error);
     }
-
 });
 
-
-after(function (done) {
+after((done) => {
     SunshineVirtual.disconnect();
     done();
 });

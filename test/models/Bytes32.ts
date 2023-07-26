@@ -1,15 +1,11 @@
-export class Bytes32{
-
+export class Bytes32 {
     private id: string;
 
     constructor(id: string) {
         this.id = id;
     }
 
-    public toString(){
+    public toString() {
         return this.id;
     }
-
 }
-
-

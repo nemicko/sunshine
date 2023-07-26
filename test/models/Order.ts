@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Sunshine
  *
@@ -21,26 +22,23 @@
  * OUT OF OR IN CONNECTION WITH T
  */
 
-import {Article} from "./Article";
-
-import {ObjectId} from "mongodb";
-import {Customer} from "./Customer";
-
-import {EmbeddedModel} from "../../src/EmbeddedModel";
-import {Collection, embedded, Model, objectid} from "../../src/Model";
+import { Article } from './Article';
+import { ObjectId } from 'mongodb';
+import { Customer } from './Customer';
+import { EmbeddedModel } from '../../src';
+import { Collection, embedded, Model, objectid } from '../../src';
 
 export declare type Log = {
-    type: string,
-    timestamp: Date,
-    success: boolean,
-    data: any,
-    error: any,
-    state?: number
-}
+    type: string;
+    timestamp: Date;
+    success: boolean;
+    data: any;
+    error: any;
+    state?: number;
+};
 
-export class Item extends EmbeddedModel{
-
-    constructor(data?: any){
+export class Item extends EmbeddedModel {
+    constructor(data?: any) {
         super(data);
         this.__ignoredAttributes = ['_article', 'articles'];
     }
@@ -54,13 +52,11 @@ export class Item extends EmbeddedModel{
     amount: number;
     netValue: number;
     grossValue: number;
-
 }
 
-@Collection("orders")
+@Collection('orders')
 export class Order extends Model {
-
-    constructor(){
+    constructor() {
         super();
         this.items = [] as any;
         this.created = new Date();
@@ -70,7 +66,7 @@ export class Order extends Model {
     }
 
     @embedded()
-    items : Array<Item>;
+    items: Array<Item>;
     number: string;
 
     @objectid()
@@ -78,24 +74,32 @@ export class Order extends Model {
     _customer?: Customer;
 
     paymentDetails: {
-        creditCard: number,
-        cvc: number
+        creditCard: number;
+        cvc: number;
     };
 
     attributes: any;
 
+    article_ids: ObjectId[];
+    _articles?: Article[];
+
     created: Date;
     updated: Date;
 
-    protected populatable(){
+    protected populatable() {
         return {
-            customer:{
+            customer: {
                 type: Customer,
-                collection: "customers",
-                reference: "customer_id",
-                many: false
-            }
-        }
+                collection: 'customers',
+                reference: 'customer_id',
+                many: false,
+            },
+            articles: {
+                type: Article,
+                collection: 'articles',
+                reference: 'article_ids',
+                many: true,
+            },
+        };
     }
-
 }

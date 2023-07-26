@@ -1,6 +1,7 @@
-.idea
 node_modules
-lib
 dist
-.husky
+lib
+coverage
+.github
 .nyc_output
+.husky
