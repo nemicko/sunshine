@@ -26,7 +26,7 @@
     },
     "homepage": "https://github.com/nemicko/sunshine#readme",
     "dependencies": {
-        "crypto-js": "^4.1.1",
+        "crypto-js": "^4.2.0",
         "mongodb": "^5.7.0"
     },
     "devDependencies": {
